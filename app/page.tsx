@@ -340,10 +340,10 @@ export default function CoteHouse() {
                             rank.rank === 1
                               ? 'bg-yellow-500 text-black'
                               : rank.rank === 2
-                                ? 'bg-gray-400 text-black'
-                                : rank.rank === 3
-                                  ? 'bg-orange-600 text-white'
-                                  : 'bg-gray-600 text-white'
+                              ? 'bg-gray-400 text-black'
+                              : rank.rank === 3
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-600 text-white'
                           }`}
                         >
                           {rank.rank}
@@ -411,11 +411,15 @@ export default function CoteHouse() {
       </div>
 
       {/* Odd Even Game Modal */}
-      <OddEvenGameModal
+      {/* <OddEvenGameModal
         isOpen={isOddEvenModalOpen}
         onClose={() => setIsOddEvenModalOpen(false)}
         userPoints={userPoints}
-        onPointsUpdate={setUserPoints}
+        onPointsUpdate={setUserPoints} username={''}      /> */}
+      <OddEvenGameModal
+        isOpen={isOddEvenModalOpen}
+        onClose={() => setIsOddEvenModalOpen(false)}
+        username={'tests'}
       />
     </div>
   );
