@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from './auth/AuthContext';
 import { AuthProvider } from './auth/AuthContext';
+import RealTimeChat from './components/RealTimeChat';
 import Link from 'next/link';
 import OddEvenGameModal from './components/odd-even-modal';
 
@@ -30,6 +31,14 @@ export default function CoteHouse() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // const [chatMessages, setChatMessages] = useState<
+  //   {
+  //     user: string;
+  //     message: string;
+  //     time: string;
+  //   }[]
+  // >([]);
 
   const problems = [
     {
@@ -108,12 +117,12 @@ export default function CoteHouse() {
     { rank: 5, user: '코테왕', points: 52340, change: 'down' },
   ];
 
-  const chatMessages = [
-    { user: '베팅마스터', message: '다들 몇 포 걸었냐?', time: '13:45' },
-    { user: '올인각', message: '이번엔 올인 각이야 ㅋㅋ', time: '13:46' },
-    { user: '알고킹', message: 'DP 문제 나오면 무조건 승부', time: '13:47' },
-    { user: '코딩도박사', message: '포인트 2만개 걸었다', time: '13:48' },
-  ];
+  // const chatMessages = [
+  //   // { user: '베팅마스터', message: '다들 몇 포 걸었냐?', time: '13:45' },
+  //   // { user: '올인각', message: '이번엔 올인 각이야 ㅋㅋ', time: '13:46' },
+  //   // { user: '알고킹', message: 'DP 문제 나오면 무조건 승부', time: '13:47' },
+  //   // { user: '코딩도박사', message: '포인트 2만개 걸었다', time: '13:48' },
+  // ];
 
   const handleGameClick = (gameId: number) => {
     if (gameId === 1) {
@@ -399,7 +408,7 @@ export default function CoteHouse() {
               </Card>
 
               {/* Chat */}
-              <Card className="bg-black/40 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
+              {/* <Card className="bg-black/40 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-blue-300">
                     <MessageCircle className="w-5 h-5" />
@@ -435,7 +444,13 @@ export default function CoteHouse() {
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
+              <RealTimeChat
+              // chatMessages={chatMessages}
+              // onSendMessage={(newMsg) =>
+              //   setChatMessages((prev) => [...prev, newMsg])
+              // }
+              />
             </div>
           </div>
         </div>
