@@ -19,6 +19,9 @@ import { useAuth } from './auth/AuthContext';
 import { AuthProvider } from './auth/AuthContext';
 import Link from 'next/link';
 import OddEvenGameModal from './components/odd-even-modal';
+import TodayNotice from './components/TodayNotice';
+import RankingCard from './components/RankingCard';
+import Navbar from './components/Navbar';
 
 export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -100,14 +103,6 @@ export default function CoteHouse() {
     },
   ];
 
-  const rankings = [
-    { rank: 1, user: '알고마스터', points: 89420, change: 'up' },
-    { rank: 2, user: '코딩킹', points: 76830, change: 'up' },
-    { rank: 3, user: '백준러버', points: 65240, change: 'down' },
-    { rank: 4, user: '알고리즘신', points: 58910, change: 'up' },
-    { rank: 5, user: '코테왕', points: 52340, change: 'down' },
-  ];
-
   const chatMessages = [
     { user: '베팅마스터', message: '다들 몇 포 걸었냐?', time: '13:45' },
     { user: '올인각', message: '이번엔 올인 각이야 ㅋㅋ', time: '13:46' },
@@ -124,121 +119,13 @@ export default function CoteHouse() {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
-        {/* Navbar */}
-        <nav className="border-b border-purple-500/30 bg-black/20 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent animate-pulse">
-                🎰 코테 하우스
-              </h1>
-            </div>
-
-            <div className="flex items-center space-x-6">
-              <Link href="/settlement">
-                <Button
-                  variant="ghost"
-                  className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                >
-                  정산내역
-                </Button>
-              </Link>
-              <Link href="/report">
-                <Button
-                  variant="ghost"
-                  className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                >
-                  신고하기
-                </Button>
-              </Link>
-              <Link href="/admin">
-                <Button
-                  variant="ghost"
-                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10 border border-red-500/30"
-                >
-                  <Crown className="w-4 h-4 mr-2" />
-                  관리자
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-4">
-                {isAuthenticated ? (
-                  <div className="flex items-center space-x-3 bg-purple-800/30 px-4 py-2 rounded-lg border border-purple-500/50">
-                    <User className="w-4 h-4 text-purple-300" />
-                    <span className="text-purple-200">{user?.username}</span>
-                    <div className="flex items-center space-x-1">
-                      <Coins className="w-4 h-4 text-yellow-400" />
-                      <span className="text-yellow-400 font-bold">
-                        hardcoded point
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      className="text-red-300 hover:text-white"
-                      onClick={logout}
-                    >
-                      로그아웃
-                    </Button>
-                  </div>
-                ) : (
-                  <Link href="/auth">
-                    <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold">
-                      <User className="w-4 h-4 mr-2" />
-                      로그인 / 회원가입
-                    </Button>
-                  </Link>
-                )}
-
-                {/* <Link href="/auth"> */}
-                {/* <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold"> */}
-                {/* <User className="w-4 h-4 mr-2" /> */}
-                {/* 로그인 / 회원가입 */}
-                {/* </Button> */}
-                {/* </Link> */}
-
-                {/* 로그인 후에는 이 부분이 표시됩니다 */}
-                {/* <div className="hidden items-center space-x-3 bg-purple-800/30 px-4 py-2 rounded-lg border border-purple-500/50"> */}
-                {/* <User className="w-4 h-4 text-purple-300" /> */}
-                {/* <span className="text-purple-200">알고마스터</span> */}
-                {/* <div className="flex items-center space-x-1"> */}
-                {/* <Coins className="w-4 h-4 text-yellow-400" /> */}
-                {/* <span className="text-yellow-400 font-bold"> */}
-                {/* {userPoints.toLocaleString()}P */}
-                {/* </span> */}
-                {/* </div> */}
-                {/* </div> */}
-              </div>
-            </div>
-          </div>
-        </nav>
-
+        <Navbar />
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-3 space-y-6">
               {/* Notice Section */}
-              <Card className="bg-gradient-to-r from-purple-800/50 to-blue-800/50 border-2 border-cyan-400/50 shadow-lg shadow-cyan-400/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-cyan-300">
-                    <Bell className="w-5 h-5 animate-bounce" />
-                    <span>오늘의 게임 공지</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-cyan-100">
-                      🕐 현재 시간:{' '}
-                      <span className="text-yellow-400 font-mono">
-                        {currentTime.toLocaleTimeString()}
-                      </span>
-                    </p>
-                    <p className="text-orange-300">
-                      ⚠️ 베팅은 신중하게! 포인트 관리에 유의하세요.
-                    </p>
-                    <p className="text-green-300">
-                      🎯 오늘의 특별 이벤트: 첫 게임 승리 시 보너스 포인트 2배!
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <TodayNotice />
 
               {/* Today's Problems */}
               <Card className="bg-black/40 border-2 border-green-400/50 shadow-lg shadow-green-400/20">
@@ -332,72 +219,7 @@ export default function CoteHouse() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Rankings */}
-              <Card className="bg-gradient-to-b from-yellow-900/30 to-orange-900/30 border-2 border-yellow-400/50 shadow-lg shadow-yellow-400/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-yellow-300">
-                    <Trophy className="w-5 h-5" />
-                    <span>실시간 랭킹</span>
-                  </CardTitle>
-                  <div className="flex space-x-2">
-                    {['전체', '이번 회차'].map((tab) => (
-                      <Button
-                        key={tab}
-                        size="sm"
-                        variant={selectedTab === tab ? 'default' : 'ghost'}
-                        onClick={() => setSelectedTab(tab)}
-                        className={
-                          selectedTab === tab
-                            ? 'bg-yellow-600 text-black'
-                            : 'text-yellow-300'
-                        }
-                      >
-                        {tab}
-                      </Button>
-                    ))}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {rankings.map((rank) => (
-                      <div
-                        key={rank.rank}
-                        className="flex items-center justify-between p-2 bg-black/30 rounded border border-yellow-600/30"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span
-                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                              rank.rank === 1
-                                ? 'bg-yellow-500 text-black'
-                                : rank.rank === 2
-                                ? 'bg-gray-400 text-black'
-                                : rank.rank === 3
-                                ? 'bg-orange-600 text-white'
-                                : 'bg-gray-600 text-white'
-                            }`}
-                          >
-                            {rank.rank}
-                          </span>
-                          <span className="text-white font-medium">
-                            {rank.user}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-yellow-400 font-bold text-sm">
-                            {rank.points.toLocaleString()}P
-                          </span>
-                          {rank.change === 'up' ? (
-                            <TrendingUp className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-red-400" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
+              <RankingCard />
               {/* Chat */}
               <Card className="bg-black/40 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
                 <CardHeader>
