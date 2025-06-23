@@ -419,7 +419,6 @@ export default function CoteHouse() {
       <OddEvenGameModal
         isOpen={isOddEvenModalOpen}
         onClose={() => setIsOddEvenModalOpen(false)}
-        username={'tests'}
       />
     </div>
   );

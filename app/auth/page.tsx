@@ -1,47 +1,57 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState, useEffect } from "react"
-import { Eye, EyeOff, CheckCircle, XCircle, Loader2, Sparkles, Crown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useRouter } from "next/navigation"
-
+import { useState, useEffect } from 'react';
+import {
+  Eye,
+  EyeOff,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Sparkles,
+  Crown,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useRouter } from 'next/navigation';
+import { useAuth } from './AuthContext';
 export default function AuthPage() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("login")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isEntering, setIsEntering] = useState(false)
-
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('login');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
+  const { login } = useAuth();
   // Login state
   const [loginData, setLoginData] = useState({
-    username: "",
-    password: "",
-  })
+    username: '',
+    password: '',
+  });
 
   // Register state
   const [registerData, setRegisterData] = useState({
-    bojId: "",
-    password: "",
-    confirmPassword: "",
-    sessionNumber: "",
-  })
+    bojId: '',
+    password: '',
+    confirmPassword: '',
+    sessionNumber: '',
+  });
 
   const [bojVerification, setBojVerification] = useState({
     isVerifying: false,
     isVerified: false,
     isError: false,
-    message: "",
-  })
+    message: '',
+  });
 
   // Floating chips animation
-  const [chips, setChips] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([])
+  const [chips, setChips] = useState<
+    Array<{ id: number; x: number; y: number; delay: number }>
+  >([]);
 
   useEffect(() => {
     // Generate floating chips
@@ -50,77 +60,161 @@ export default function AuthPage() {
       x: Math.random() * 100,
       y: Math.random() * 100,
       delay: Math.random() * 2,
-    }))
-    setChips(newChips)
-  }, [])
+    }));
+    setChips(newChips);
+  }, []);
 
   const handleBojVerification = async () => {
-    if (!registerData.bojId.trim()) return
+    if (!registerData.bojId.trim()) return;
 
-    setBojVerification({ isVerifying: true, isVerified: false, isError: false, message: "" })
+    setBojVerification({
+      isVerifying: true,
+      isVerified: false,
+      isError: false,
+      message: '',
+    });
 
     // 백준 아이디 검증 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // 랜덤하게 성공/실패 결정 (실제로는 백준 API 호출)
-    const isValid = Math.random() > 0.3 // 70% 성공률
+    // const isValid = false
 
-    if (isValid) {
-      setBojVerification({
-        isVerifying: false,
-        isVerified: true,
-        isError: false,
-        message: "백준 아이디가 확인되었습니다! 🎉",
-      })
-    } else {
-      setBojVerification({
-        isVerifying: false,
-        isVerified: false,
-        isError: true,
-        message: "존재하지 않는 백준 아이디입니다. 다시 확인해주세요.",
-      })
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/confirm`,
+        {
+          method: 'POST',
+          headers: {
+            'content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: registerData.bojId,
+            classes: registerData.sessionNumber,
+          }),
+        }
+      );
+      if (res.status != 200) {
+        setBojVerification({
+          isVerifying: false,
+          isVerified: false,
+          isError: true,
+          message:
+            '존재하지 않는 백준 아이디 또는 회차 설정을 하지 않은 계정입니다. 다시 확인해주세요',
+        });
+        throw new Error('인증 실패');
+      } else {
+        setBojVerification({
+          isVerifying: false,
+          isVerified: true,
+          isError: false,
+          message: '백준 아이디가 확인되었습니다! 🎉',
+        });
+      }
+    } catch (err) {
+      alert('인증 실패');
     }
-  }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!loginData.username || !loginData.password) return
+    e.preventDefault();
+    if (!loginData.username || !loginData.password) return;
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: loginData.username,
+            password: loginData.password,
+          }),
+        }
+      );
 
-    // 로그인 성공 애니메이션
-    setIsEntering(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (res.status != 200) throw new Error('로그인 실패');
 
-    router.push("/")
-  }
+      // 예: 토큰 처리 및 라우팅
+      const data = await res.json();
+      console.log('로그인 성공:', data);
+      login(data.accessToken, data.username);
+      localStorage.setItem('username', loginData.username);
+      setIsEntering(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.push('/');
+    } catch (err) {
+      console.log(err);
+      alert('로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+    // await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // // 로그인 성공 애니메이션
+    // setIsEntering(true);
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // router.push('/');
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (
       !bojVerification.isVerified ||
       !registerData.password ||
       !registerData.confirmPassword ||
       !registerData.sessionNumber
     ) {
-      return
+      return;
     }
 
     if (registerData.password !== registerData.confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.")
-      return
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
     }
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: registerData.bojId,
+            password: registerData.password,
+            classes: registerData.sessionNumber,
+          }),
+        }
+      );
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+      if (!res.ok) throw new Error('회원가입 실패');
 
-    // 회원가입 성공 애니메이션
-    setIsEntering(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+      const data = await res.json();
+      console.log('회원가입 성공:', data);
 
-    router.push("/")
-  }
+      setIsEntering(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.push('/');
+    } catch (err) {
+      alert('회원가입에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+    // setIsLoading(true);
+    // await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // // 회원가입 성공 애니메이션
+    // setIsEntering(true);
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // router.push('/');
+  };
 
   if (isEntering) {
     return (
@@ -131,14 +225,17 @@ export default function AuthPage() {
             코테 하우스 입장 중...
           </h1>
           <div className="flex justify-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
             <div
               className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: "150ms" }}
+              style={{ animationDelay: '0ms' }}
             ></div>
             <div
               className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: "300ms" }}
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
+              style={{ animationDelay: '300ms' }}
             ></div>
           </div>
         </div>
@@ -153,7 +250,7 @@ export default function AuthPage() {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 2}s`,
-                animationDuration: "2s",
+                animationDuration: '2s',
               }}
             >
               🪙
@@ -161,7 +258,7 @@ export default function AuthPage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -207,7 +304,11 @@ export default function AuthPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-2 bg-gray-800/50 border border-purple-500/50">
                 <TabsTrigger
                   value="login"
@@ -234,7 +335,9 @@ export default function AuthPage() {
                       id="login-username"
                       type="text"
                       value={loginData.username}
-                      onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                      onChange={(e) =>
+                        setLoginData({ ...loginData, username: e.target.value })
+                      }
                       placeholder="아이디를 입력하세요"
                       className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                       required
@@ -248,9 +351,14 @@ export default function AuthPage() {
                     <div className="relative">
                       <Input
                         id="login-password"
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        onChange={(e) =>
+                          setLoginData({
+                            ...loginData,
+                            password: e.target.value,
+                          })
+                        }
                         placeholder="비밀번호를 입력하세요"
                         className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400 pr-10"
                         required
@@ -262,14 +370,20 @@ export default function AuthPage() {
                         className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={isLoading || !loginData.username || !loginData.password}
+                    disabled={
+                      isLoading || !loginData.username || !loginData.password
+                    }
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
                   >
                     {isLoading ? (
@@ -299,7 +413,12 @@ export default function AuthPage() {
                         id="boj-id"
                         type="text"
                         value={registerData.bojId}
-                        onChange={(e) => setRegisterData({ ...registerData, bojId: e.target.value })}
+                        onChange={(e) =>
+                          setRegisterData({
+                            ...registerData,
+                            bojId: e.target.value,
+                          })
+                        }
                         placeholder="백준 아이디"
                         className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                         disabled={bojVerification.isVerified}
@@ -309,7 +428,9 @@ export default function AuthPage() {
                         type="button"
                         onClick={handleBojVerification}
                         disabled={
-                          bojVerification.isVerifying || bojVerification.isVerified || !registerData.bojId.trim()
+                          bojVerification.isVerifying ||
+                          bojVerification.isVerified ||
+                          !registerData.bojId.trim()
                         }
                         className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50"
                       >
@@ -318,15 +439,25 @@ export default function AuthPage() {
                         ) : bojVerification.isVerified ? (
                           <CheckCircle className="w-4 h-4" />
                         ) : (
-                          "검증"
+                          '검증'
                         )}
                       </Button>
                     </div>
                     {bojVerification.message && (
                       <Alert
-                        className={`${bojVerification.isError ? "border-red-500/50 bg-red-900/20" : "border-green-500/50 bg-green-900/20"}`}
+                        className={`${
+                          bojVerification.isError
+                            ? 'border-red-500/50 bg-red-900/20'
+                            : 'border-green-500/50 bg-green-900/20'
+                        }`}
                       >
-                        <AlertDescription className={bojVerification.isError ? "text-red-200" : "text-green-200"}>
+                        <AlertDescription
+                          className={
+                            bojVerification.isError
+                              ? 'text-red-200'
+                              : 'text-green-200'
+                          }
+                        >
                           {bojVerification.isError ? (
                             <XCircle className="w-4 h-4 inline mr-2" />
                           ) : (
@@ -339,14 +470,22 @@ export default function AuthPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register-password" className="text-gray-300">
+                    <Label
+                      htmlFor="register-password"
+                      className="text-gray-300"
+                    >
                       비밀번호 <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="register-password"
                       type="password"
                       value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      onChange={(e) =>
+                        setRegisterData({
+                          ...registerData,
+                          password: e.target.value,
+                        })
+                      }
                       placeholder="비밀번호를 입력하세요"
                       className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                       required
@@ -361,7 +500,12 @@ export default function AuthPage() {
                       id="confirm-password"
                       type="password"
                       value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      onChange={(e) =>
+                        setRegisterData({
+                          ...registerData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       placeholder="비밀번호를 다시 입력하세요"
                       className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                       required
@@ -376,7 +520,12 @@ export default function AuthPage() {
                       id="session-number"
                       type="text"
                       value={registerData.sessionNumber}
-                      onChange={(e) => setRegisterData({ ...registerData, sessionNumber: e.target.value })}
+                      onChange={(e) =>
+                        setRegisterData({
+                          ...registerData,
+                          sessionNumber: e.target.value,
+                        })
+                      }
                       placeholder="예: 2024-1"
                       className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                       required
@@ -419,5 +568,5 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
