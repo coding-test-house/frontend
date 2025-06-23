@@ -444,8 +444,6 @@ export default function CoteHouse() {
         <OddEvenGameModal
           isOpen={isOddEvenModalOpen}
           onClose={() => setIsOddEvenModalOpen(false)}
-          userPoints={userPoints}
-          onPointsUpdate={setUserPoints}
         />
       </div>
     </AuthProvider>
