@@ -19,14 +19,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
-
+import { useAuth } from './AuthContext';
 export default function AuthPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
-
+  const { login } = useAuth();
   // Login state
   const [loginData, setLoginData] = useState({
     username: '',
@@ -78,22 +78,41 @@ export default function AuthPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // 랜덤하게 성공/실패 결정 (실제로는 백준 API 호출)
-    const isValid = Math.random() > 0.3; // 70% 성공률
+    // const isValid = false
 
-    if (isValid) {
-      setBojVerification({
-        isVerifying: false,
-        isVerified: true,
-        isError: false,
-        message: '백준 아이디가 확인되었습니다! 🎉',
-      });
-    } else {
-      setBojVerification({
-        isVerifying: false,
-        isVerified: false,
-        isError: true,
-        message: '존재하지 않는 백준 아이디입니다. 다시 확인해주세요.',
-      });
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/confirm`,
+        {
+          method: 'POST',
+          headers: {
+            'content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: registerData.bojId,
+            classes: registerData.sessionNumber,
+          }),
+        }
+      );
+      if (res.status != 200) {
+        setBojVerification({
+          isVerifying: false,
+          isVerified: false,
+          isError: true,
+          message:
+            '존재하지 않는 백준 아이디 또는 회차 설정을 하지 않은 계정입니다. 다시 확인해주세요',
+        });
+        throw new Error('인증 실패');
+      } else {
+        setBojVerification({
+          isVerifying: false,
+          isVerified: true,
+          isError: false,
+          message: '백준 아이디가 확인되었습니다! 🎉',
+        });
+      }
+    } catch (err) {
+      alert('인증 실패');
     }
   };
 
@@ -102,13 +121,44 @@ export default function AuthPage() {
     if (!loginData.username || !loginData.password) return;
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: loginData.username,
+            password: loginData.password,
+          }),
+        }
+      );
 
-    // 로그인 성공 애니메이션
-    setIsEntering(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (res.status != 200) throw new Error('로그인 실패');
 
-    router.push('/');
+      // 예: 토큰 처리 및 라우팅
+      const data = await res.json();
+      console.log('로그인 성공:', data);
+      login(data.accessToken, data.username);
+      localStorage.setItem('username', loginData.username);
+      setIsEntering(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.push('/');
+    } catch (err) {
+      console.log(err);
+      alert('로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+    // await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // // 로그인 성공 애니메이션
+    // setIsEntering(true);
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // router.push('/');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -126,15 +176,44 @@ export default function AuthPage() {
       alert('비밀번호가 일치하지 않습니다.');
       return;
     }
-
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: registerData.bojId,
+            password: registerData.password,
+            classes: registerData.sessionNumber,
+          }),
+        }
+      );
 
-    // 회원가입 성공 애니메이션
-    setIsEntering(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!res.ok) throw new Error('회원가입 실패');
 
-    router.push('/');
+      const data = await res.json();
+      console.log('회원가입 성공:', data);
+
+      setIsEntering(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.push('/');
+    } catch (err) {
+      alert('회원가입에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+    // setIsLoading(true);
+    // await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // // 회원가입 성공 애니메이션
+    // setIsEntering(true);
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // router.push('/');
   };
 
   if (isEntering) {
@@ -366,7 +445,11 @@ export default function AuthPage() {
                     </div>
                     {bojVerification.message && (
                       <Alert
-                        className={`${bojVerification.isError ? 'border-red-500/50 bg-red-900/20' : 'border-green-500/50 bg-green-900/20'}`}
+                        className={`${
+                          bojVerification.isError
+                            ? 'border-red-500/50 bg-red-900/20'
+                            : 'border-green-500/50 bg-green-900/20'
+                        }`}
                       >
                         <AlertDescription
                           className={
@@ -433,8 +516,9 @@ export default function AuthPage() {
                     <Label htmlFor="session-number" className="text-gray-300">
                       회차 번호 <span className="text-red-400">*</span>
                     </Label>
-                    <select
+                    <Input
                       id="session-number"
+                      type="text"
                       value={registerData.sessionNumber}
                       onChange={(e) =>
                         setRegisterData({
@@ -442,22 +526,10 @@ export default function AuthPage() {
                           sessionNumber: e.target.value,
                         })
                       }
-                      className="flex h-10 w-full rounded-md border border-purple-500/50 bg-gray-800/50 px-3 py-2 text-sm text-white 
-             placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2"
+                      placeholder="예: 2024-1"
+                      className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                       required
-                    >
-                      <option value="" disabled>
-                        회차를 선택하세요
-                      </option>
-                      {Array.from({ length: 10 }, (_, i) => {
-                        const session = (i + 11).toString();
-                        return (
-                          <option key={session} value={session}>
-                            {session}회차
-                          </option>
-                        );
-                      })}
-                    </select>
+                    />
                   </div>
 
                   <Button
