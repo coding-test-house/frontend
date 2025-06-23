@@ -17,17 +17,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import OddEvenGameModal from './components/odd-even-modal';
+import axios from 'axios';
 
 export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userPoints, setUserPoints] = useState(15420);
   const [selectedTab, setSelectedTab] = useState('전체');
-  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
 
   const problems = [
     {
@@ -35,37 +31,97 @@ export default function CoteHouse() {
       title: 'A+B',
       difficulty: '브론즈V',
       points: 100,
-      betAmount: '',
+      checked: false,
     },
     {
       id: 2557,
       title: 'Hello World',
       difficulty: '브론즈V',
       points: 100,
-      betAmount: '',
+      checked: false,
     },
     {
       id: 10950,
       title: 'A+B - 3',
       difficulty: '브론즈III',
       points: 200,
-      betAmount: '',
+      checked: false,
     },
     {
       id: 1008,
       title: 'A/B',
       difficulty: '브론즈IV',
       points: 150,
-      betAmount: '',
+      checked: false,
     },
     {
       id: 10998,
       title: 'A×B',
       difficulty: '브론즈V',
       points: 100,
-      betAmount: '',
+      checked: false,
     },
   ];
+
+  const [problemsState, setProblemsState] = useState(problems);
+  const username = 'leehk_py';
+  useEffect(() => {
+    const fetchSolvedProblems = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/users/${username}/solved`
+        );
+        const solvedIds: string[] = res.data; // 예: ["1001", "10950"]
+        
+        console.log(solvedIds);
+        const updated = problemsState.map((problem) =>
+          solvedIds.includes(problem.id.toString())
+            ? { ...problem, checked: true }
+            : { ...problem, checked: false }
+        );
+
+        setProblemsState(updated);
+      } catch (error) {
+        console.error('유저 해결 문제 불러오기 실패', error);
+      }
+    };
+  
+    fetchSolvedProblems();
+  }, []);
+
+  const handleProblemCheckClick = async (problemId: number) => {
+    try {
+      const response = await axios.get('http://localhost:8080/solvedCheck/check', {
+        params: {
+          user: username,
+          problem: problemId,
+        },
+      });
+
+      console.log(response);
+
+      const result = response.data;
+      if (result === true) {
+        await axios.post(`http://localhost:8080/users/${username}/solved/${problemId}`);
+
+        const updated = problemsState.map((problem) =>
+          problem.id === problemId ? { ...problem, checked: true } : problem
+        );
+        setProblemsState(updated);
+        alert('풀이 성공');
+      } else {
+        alert('문제를 풀고 체크해주세요!');
+      }
+    } catch (error) {
+      console.error('요청 실패:', error);
+      alert('오류가 발생했습니다.');
+    }
+  }
+
+  useEffect(() => {
+    console.log('🔁 상태 변경됨:', problemsState);
+  }, [problemsState]);
+  
 
   const games = [
     {
@@ -219,7 +275,7 @@ export default function CoteHouse() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3">
-                  {problems.map((problem) => (
+                  {problemsState.map((problem) => (
                     <div
                       key={problem.id}
                       className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-600/50 hover:border-green-400/50 transition-all"
@@ -242,15 +298,17 @@ export default function CoteHouse() {
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Input
-                          placeholder="베팅 포인트"
-                          className="w-32 bg-gray-900/50 border-purple-500/50 text-white"
-                        />
                         <Button
                           size="sm"
-                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                          className={`transition-all ${
+                            problem.checked
+                              ? 'bg-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                          }`}
+                          onClick={() => handleProblemCheckClick(problem.id)}
+                          disabled={problem.checked}
                         >
-                          베팅
+                          {problem.checked ? '제출완료' : '제출 ㄱ?'}
                         </Button>
                       </div>
                     </div>
