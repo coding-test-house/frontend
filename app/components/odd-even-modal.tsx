@@ -109,7 +109,7 @@ export default function OddEvenGameModal({
     if (!username) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/${username}/point`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${username}/point`
       );
       if (!res.ok) throw new Error('포인트 로딩 실패');
       const data = await res.json();
