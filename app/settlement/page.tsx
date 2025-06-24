@@ -8,19 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import axios from "axios"
+import { useMemo } from 'react';
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function SettlementPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("전체")
   const [selectedType, setSelectedType] = useState("전체")
-
-  const totalStats = {
-    totalEarned: 45680,
-    totalSpent: 32140,
-    netProfit: 13540,
-    winRate: 68.5,
-  }
 
   const [username, setUsername] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]); // 또는 타입을 따로 정의해도 됨
@@ -79,6 +73,30 @@ export default function SettlementPage() {
     return "neutral";
   };
 
+  const totalStats = useMemo(() => {
+    let totalEarned = 0;
+    let totalSpent = 0;
+  
+    transactions.forEach((t) => {
+      if (typeof t.amount === 'number') {
+        if (t.amount > 0) {
+          totalEarned += t.amount;
+        } else {
+          totalSpent += Math.abs(t.amount);
+        }
+      }
+    });
+  
+    const netProfit = totalEarned - totalSpent;
+  
+    return {
+      totalEarned,
+      totalSpent,
+      netProfit,
+      winRate: 68.5, // 임시 고정
+    };
+  }, [transactions]);
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case "게임승리":
@@ -124,10 +142,10 @@ export default function SettlementPage() {
                 💰 정산 내역
               </h1>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            {/* <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
               <Download className="w-4 h-4 mr-2" />
               내역 다운로드
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
