@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowLeft, TrendingUp, TrendingDown, Coins, Calendar, Filter, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import axios from "axios"
+
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function SettlementPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("전체")
@@ -19,88 +22,62 @@ export default function SettlementPage() {
     winRate: 68.5,
   }
 
-  const transactions = [
-    {
-      id: 1,
-      date: "2024-01-15",
-      time: "14:30",
-      type: "게임승리",
-      description: "스피드 코딩 - 1등",
-      amount: +8500,
-      balance: 23940,
-      category: "earn",
-    },
-    {
-      id: 2,
-      date: "2024-01-15",
-      time: "14:00",
-      type: "베팅",
-      description: "스피드 코딩 참가비",
-      amount: -2000,
-      balance: 15440,
-      category: "bet",
-    },
-    {
-      id: 3,
-      date: "2024-01-15",
-      time: "10:15",
-      type: "문제해결",
-      description: "백준 #1001 정답",
-      amount: +150,
-      balance: 17440,
-      category: "earn",
-    },
-    {
-      id: 4,
-      date: "2024-01-14",
-      time: "20:45",
-      type: "게임패배",
-      description: "DP 마스터 - 탈락",
-      amount: -5000,
-      balance: 17290,
-      category: "loss",
-    },
-    {
-      id: 5,
-      date: "2024-01-14",
-      time: "20:00",
-      type: "베팅",
-      description: "DP 마스터 참가비",
-      amount: -5000,
-      balance: 22290,
-      category: "bet",
-    },
-    {
-      id: 6,
-      date: "2024-01-14",
-      time: "16:30",
-      type: "게임승리",
-      description: "알고리즘 배틀 - 2등",
-      amount: +3200,
-      balance: 27290,
-      category: "earn",
-    },
-    {
-      id: 7,
-      date: "2024-01-14",
-      time: "16:00",
-      type: "베팅",
-      description: "알고리즘 배틀 참가비",
-      amount: -1500,
-      balance: 24090,
-      category: "bet",
-    },
-    {
-      id: 8,
-      date: "2024-01-13",
-      time: "18:20",
-      type: "보너스",
-      description: "연속 승리 보너스",
-      amount: +1000,
-      balance: 25590,
-      category: "earn",
-    },
-  ]
+  const [username, setUsername] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]); // 또는 타입을 따로 정의해도 됨
+  useEffect(() => {
+    const fetchHistoryData = async () => {
+      try {
+        const storageUsername = localStorage.getItem("username") || null;
+        setUsername(storageUsername);
+        const historyRes = await axios.get(`${baseURL}/history/${storageUsername}`);
+        
+        const histories: string[] = historyRes.data;
+        console.log(histories)
+
+        const mapped: any[] = [];
+        let runningBalance = 0;
+
+        // 1. 오래된 기록부터 balance 누적 계산
+        histories
+          .slice() // 원본 배열 복사 (직접 수정 방지)
+          .sort((a: any, b: any) => new Date(a.createdAt || a.date).getTime() - new Date(b.createdAt || b.date).getTime())
+          .forEach((item: any, index: number) => {
+            const amount = typeof item.amount === 'number' ? item.amount : Number(item.amount) || 0;
+            runningBalance += amount;
+
+            mapped.push({
+              id: index + 1,
+              date: item.time.slice(0, 10),
+              time: item.time.slice(11, 16) || '00:30',
+              type: item.type || "기타",
+              description: item.description || "상세 정보 없음",
+              amount,
+              balance: runningBalance,
+              category: item.category || getCategory(amount),
+            });
+          });
+
+        // 2. 최신순 정렬 후 상위 20개만 잘라서 set
+        const latest20 = mapped
+          .slice() // 복사
+          .reverse() // 최신순
+          .slice(0, 20); // 상위 20개
+
+        setTransactions(latest20);
+
+      } catch (err) {
+        console.error('문제 또는 해결 정보 불러오기 실패:', err);
+      }
+    };
+
+    fetchHistoryData();
+  }, []);
+
+  const getCategory = (amount: number) => {
+    if (amount > 0) return "earn";
+    if (amount < 0) return "loss";
+    return "neutral";
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {

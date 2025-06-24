@@ -10,6 +10,7 @@ import {
   TrendingUp,
   TrendingDown,
   Crown,
+  AwardIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,9 +101,10 @@ export default function CoteHouse() {
       });
 
       const result = response.data;
+      const point = problemsState.find((p) => p.id === problemId)?.points ?? 0;
       if (result === true) {
         // 문제 점수 찾아서 delta 설정
-        const delta = problemsState.find((p) => p.id === problemId)?.points ?? 0;
+        const delta = point;
 
         // 1. solved 기록 등록
         await axios.post(`${baseURL}/users/${username}/solved/${problemId}`);
@@ -115,7 +117,17 @@ export default function CoteHouse() {
 
         await axios.patch(`${baseURL}/admin/points`, userScoreRequestData);
 
-        // 3. 상태 업데이트
+        // 3. history 업데이트
+        const historyRequestData = {
+          username: username,
+          type: '문제해결',
+          amount: point,
+          reason: `문제 ${problemId}번 풀어서 적립`,
+        }
+
+        const res = await axios.post(`${baseURL}/history/add`, historyRequestData);
+
+        // 4. 상태 업데이트
         const updated = problemsState.map((problem) =>
           problem.id === problemId ? { ...problem, checked: true } : problem
         );
