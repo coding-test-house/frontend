@@ -26,141 +26,194 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import axios from 'axios';
 import Link from 'next/link';
+import { useEffect } from 'react';
+
+type Problem = {
+  title: string;
+  problemNumber: string;
+  url: string;
+  difficulty: string;
+  point: number;
+  day: string;
+};
+
+type User = {
+  username: string;
+  classes: string;
+  point: number;
+};
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
   const [searchUser, setSearchUser] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [pointAdjustment, setPointAdjustment] = useState('');
-  const [adjustmentReason, setAdjustmentReason] = useState('');
 
   // Notice state
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeContent, setNoticeContent] = useState('');
+  const [noticeInfo, setNoticeInfo] = useState('');
 
   // Problem state
   const [problemNumber, setProblemNumber] = useState('');
   const [problemLink, setProblemLink] = useState('');
+  const [problemTitle, setProblemTitle] = useState('');
+  const [problemDay, setProblemDay] = useState('');
+  const [problemDifficulty, setProblemDifficulty] = useState('');
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
-  // Mock data
-  const users = [
-    {
-      id: 1,
-      username: '알고마스터',
-      bojId: 'algo_master',
-      points: 15420,
-      status: 'active',
-      joinDate: '2024-01-10',
-    },
-    {
-      id: 2,
-      username: '코딩킹',
-      bojId: 'coding_king',
-      points: 8750,
-      status: 'active',
-      joinDate: '2024-01-12',
-    },
-    {
-      id: 3,
-      username: '베팅마스터',
-      bojId: 'bet_master',
-      points: 23100,
-      status: 'suspended',
-      joinDate: '2024-01-08',
-    },
-    {
-      id: 4,
-      username: '올인각',
-      bojId: 'all_in',
-      points: 450,
-      status: 'active',
-      joinDate: '2024-01-15',
-    },
-  ];
+  const fetchProblems = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem`
+      );
+      if (res.data.success) {
+        setProblems(res.data.data); // 응답의 data가 배열
+      }
+    } catch (err) {
+      console.error('문제 목록 불러오기 실패', err);
+    }
+  };
 
-  const notices = [
-    {
-      id: 1,
-      title: '오늘의 특별 이벤트',
-      content: '첫 게임 승리 시 보너스 포인트 2배!',
-      date: '2024-01-15',
-      active: true,
-    },
-    {
-      id: 2,
-      title: '베팅 규칙 변경 안내',
-      content: '최소 베팅 금액이 100P로 변경됩니다.',
-      date: '2024-01-14',
-      active: true,
-    },
-    {
-      id: 3,
-      title: '시스템 점검 안내',
-      content: '매주 일요일 새벽 2시-4시 점검',
-      date: '2024-01-13',
-      active: false,
-    },
-  ];
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user`
+      );
+      if (res.data.success) {
+        setUsers(res.data.data);
+      }
+    } catch (err) {
+      console.error('사용자 목록 불러오기 실패', err);
+    }
+  };
 
-  const problems = [
-    {
-      id: 1,
-      number: '1001',
-      title: 'A+B',
-      difficulty: '브론즈V',
-      points: 100,
-      active: true,
-    },
-    {
-      id: 2,
-      number: '2557',
-      title: 'Hello World',
-      difficulty: '브론즈V',
-      points: 100,
-      active: true,
-    },
-    {
-      id: 3,
-      number: '10950',
-      title: 'A+B - 3',
-      difficulty: '브론즈III',
-      points: 200,
-      active: false,
-    },
-  ];
+  useEffect(() => {
+    fetchUsers();
+    fetchProblems();
+  }, []);
 
   const handleUserSearch = () => {
-    const user = users.find(
-      (u) => u.username.includes(searchUser) || u.bojId.includes(searchUser)
-    );
+    const user = users.find((u) => u.username.includes(searchUser));
     setSelectedUser(user || null);
   };
 
-  const handlePointAdjustment = () => {
-    if (!selectedUser || !pointAdjustment || !adjustmentReason) return;
+  const handlePointAdjustment = async () => {
+    if (!selectedUser || !pointAdjustment) return;
 
-    alert(
-      `${selectedUser.username}의 포인트를 ${pointAdjustment}P 조정했습니다.\n사유: ${adjustmentReason}`
-    );
-    setPointAdjustment('');
-    setAdjustmentReason('');
+    try {
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/points`,
+        {
+          username: selectedUser.username,
+          delta: pointAdjustment,
+        }
+      );
+
+      if (res.data.success) {
+        alert(`${res.data.message}`);
+        fetchUsers();
+        setPointAdjustment('');
+      } else {
+        alert(`포인트 조정 실패: ${res.data.message}`);
+      }
+    } catch (err) {
+      console.error('포인트 조정 실패', err);
+      alert('포인트 조정 중 오류가 발생했습니다.');
+    }
   };
 
-  const handleNoticeSubmit = () => {
-    if (!noticeTitle || !noticeContent) return;
+  const handleNoticeSubmit = async () => {
+    if (!noticeTitle || !noticeContent || !noticeInfo) return;
 
-    alert(`공지사항이 등록되었습니다!\n제목: ${noticeTitle}`);
-    setNoticeTitle('');
-    setNoticeContent('');
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/notice`,
+        {
+          title: noticeTitle,
+          content: noticeContent,
+          gameInfo: noticeInfo,
+        }
+      );
+
+      if (res.data.success) {
+        alert(res.data.message); // "공지사항 수정 완료"
+        setNoticeTitle('');
+        setNoticeContent('');
+        setNoticeInfo('');
+      } else {
+        alert(`등록 실패: ${res.data.message}`);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        alert(`${err.response.data.message}`);
+      } else {
+        alert('알 수 없는 오류 발생');
+      }
+      console.error(err);
+    }
   };
 
-  const handleProblemSubmit = () => {
-    if (!problemNumber && !problemLink) return;
+  const handleProblemSubmit = async () => {
+    if (!problemTitle || (!problemNumber && !problemLink) || !problemDay) {
+      alert('문제에 대한 모든 정보를 입력해주세요.');
+      return;
+    }
 
-    alert(`문제가 등록되었습니다!\n번호: ${problemNumber || '링크에서 추출'}`);
-    setProblemNumber('');
-    setProblemLink('');
+    console.log('BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem`,
+        {
+          title: problemTitle,
+          problemNumber,
+          url: problemLink,
+          difficulty: problemDifficulty,
+          day: problemDay,
+        }
+      );
+
+      if (res.data.success) {
+        alert(`${res.data.message}`);
+        setProblemTitle('');
+        setProblemNumber('');
+        setProblemLink('');
+        setProblemDay('');
+        fetchProblems();
+      } else {
+        alert(`등록 실패: ${res.data.message}`);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        alert(`${err.response.data.message}`);
+      } else {
+        alert('알 수 없는 오류 발생');
+      }
+      console.error(err);
+    }
+  };
+
+  const handleDeleteProblem = async (problemNumber: string) => {
+    if (!confirm(`문제 #${problemNumber}를 삭제하시겠습니까?`)) return;
+
+    try {
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem/${problemNumber}`
+      );
+
+      if (res.data.success) {
+        alert(res.data.message); // "문제 삭제 성공"
+        fetchProblems(); // 목록 갱신
+      } else {
+        alert(`삭제 실패: ${res.data.message}`);
+      }
+    } catch (err) {
+      console.error('문제 삭제 중 오류 발생', err);
+      alert('문제 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -181,7 +234,7 @@ export default function AdminPage() {
                 </Button>
               </Link>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
-                🎯 관리자 콘솔
+                🎯 관리자 모드
               </h1>
               <Badge className="bg-gradient-to-r from-red-600 to-pink-600 text-white border-0">
                 <Crown className="w-3 h-3 mr-1" />
@@ -203,40 +256,6 @@ export default function AdminPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        Stats Overview
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-blue-800/30 to-cyan-800/30 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
-            <CardContent className="p-4 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-              <div className="text-blue-400 font-bold text-2xl">247</div>
-              <div className="text-blue-300 text-sm">총 사용자</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-800/30 to-emerald-800/30 border-2 border-green-400/50 shadow-lg shadow-green-400/20">
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 text-green-400" />
-              <div className="text-green-400 font-bold text-2xl">89</div>
-              <div className="text-green-300 text-sm">활성 사용자</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-yellow-800/30 to-orange-800/30 border-2 border-yellow-400/50 shadow-lg shadow-yellow-400/20">
-            <CardContent className="p-4 text-center">
-              <Coins className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-              <div className="text-yellow-400 font-bold text-2xl">1.2M</div>
-              <div className="text-yellow-300 text-sm">총 포인트</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-red-800/30 to-pink-800/30 border-2 border-red-400/50 shadow-lg shadow-red-400/20">
-            <CardContent className="p-4 text-center">
-              <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-              <div className="text-red-400 font-bold text-2xl">3</div>
-              <div className="text-red-300 text-sm">신고 대기</div>
-            </CardContent>
-          </Card>
-        </div>
         {/* Main Admin Panel */}
         <Card className="bg-black/40 border-2 border-red-400/50 shadow-2xl shadow-red-400/20">
           <CardHeader>
@@ -308,32 +327,19 @@ export default function AdminPage() {
                           </h4>
                           <div className="space-y-2 text-sm">
                             <p>
-                              <span className="text-gray-400">아이디:</span>{' '}
+                              <span className="text-gray-400">백준 ID:</span>{' '}
                               {selectedUser.username}
                             </p>
                             <p>
-                              <span className="text-gray-400">백준 ID:</span>{' '}
-                              {selectedUser.bojId}
+                              <span className="text-gray-400">회차:</span>{' '}
+                              {selectedUser.round}
                             </p>
+
                             <p>
                               <span className="text-gray-400">포인트:</span>{' '}
                               <span className="text-yellow-400 font-bold">
-                                {selectedUser.points.toLocaleString()}P
+                                {selectedUser.point.toLocaleString()}P
                               </span>
-                            </p>
-                            <p>
-                              <span className="text-gray-400">상태:</span>
-                              <Badge
-                                className={
-                                  selectedUser.status === 'active'
-                                    ? 'bg-green-600'
-                                    : 'bg-red-600'
-                                }
-                              >
-                                {selectedUser.status === 'active'
-                                  ? '활성'
-                                  : '정지'}
-                              </Badge>
                             </p>
                             <p>
                               <span className="text-gray-400">가입일:</span>{' '}
@@ -363,21 +369,9 @@ export default function AdminPage() {
                           disabled={!selectedUser}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-300">조정 사유</Label>
-                        <Textarea
-                          value={adjustmentReason}
-                          onChange={(e) => setAdjustmentReason(e.target.value)}
-                          placeholder="포인트 조정 사유를 입력하세요"
-                          className="bg-gray-900/50 border-yellow-500/50 text-white"
-                          disabled={!selectedUser}
-                        />
-                      </div>
                       <Button
                         onClick={handlePointAdjustment}
-                        disabled={
-                          !selectedUser || !pointAdjustment || !adjustmentReason
-                        }
+                        disabled={!selectedUser || !pointAdjustment}
                         className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700"
                       >
                         <Coins className="w-4 h-4 mr-2" />
@@ -400,47 +394,33 @@ export default function AdminPage() {
                         <thead>
                           <tr className="border-b border-gray-600/50">
                             <th className="text-left py-2 text-gray-400">
-                              아이디
-                            </th>
-                            <th className="text-left py-2 text-gray-400">
                               백준 ID
+                            </th>
+                            <th className="text-center py-2 text-gray-400">
+                              회차
                             </th>
                             <th className="text-right py-2 text-gray-400">
                               포인트
                             </th>
                             <th className="text-center py-2 text-gray-400">
-                              상태
-                            </th>
-                            <th className="text-center py-2 text-gray-400">
-                              액션
+                              선택
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           {users.map((user) => (
                             <tr
-                              key={user.id}
+                              key={user.username}
                               className="border-b border-gray-700/30 hover:bg-gray-800/20"
                             >
-                              <td className="py-3 text-white">
+                              <td className="py-3 text-gray-300">
                                 {user.username}
                               </td>
-                              <td className="py-3 text-gray-300">
-                                {user.bojId}
+                              <td className="py-3 text-center text-gray-300">
+                                {user.classes}
                               </td>
                               <td className="py-3 text-right text-yellow-400 font-bold">
-                                {user.points.toLocaleString()}P
-                              </td>
-                              <td className="py-3 text-center">
-                                <Badge
-                                  className={
-                                    user.status === 'active'
-                                      ? 'bg-green-600'
-                                      : 'bg-red-600'
-                                  }
-                                >
-                                  {user.status === 'active' ? '활성' : '정지'}
-                                </Badge>
+                                {user.point.toLocaleString()}P
                               </td>
                               <td className="py-3 text-center">
                                 <Button
@@ -490,6 +470,15 @@ export default function AdminPage() {
                           className="bg-gray-900/50 border-green-500/50 text-white min-h-32"
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">게임 정보</Label>
+                        <Textarea
+                          value={noticeInfo}
+                          onChange={(e) => setNoticeInfo(e.target.value)}
+                          placeholder="게임 정보를 입력하세요"
+                          className="bg-gray-900/50 border-green-500/50 text-white min-h-32"
+                        />
+                      </div>
                       <Button
                         onClick={handleNoticeSubmit}
                         disabled={!noticeTitle || !noticeContent}
@@ -509,13 +498,16 @@ export default function AdminPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {noticeTitle || noticeContent ? (
+                      {noticeTitle || noticeContent || noticeInfo ? (
                         <div className="p-4 bg-gradient-to-r from-purple-800/50 to-blue-800/50 border-2 border-cyan-400/50 rounded-lg">
                           <h4 className="text-cyan-300 font-bold mb-2">
                             {noticeTitle || '제목을 입력하세요'}
                           </h4>
                           <p className="text-cyan-100 text-sm">
                             {noticeContent || '내용을 입력하세요'}
+                          </p>
+                          <p className="text-cyan-100 text-sm">
+                            {noticeInfo || '게임 정보를 입력하세요'}
                           </p>
                         </div>
                       ) : (
@@ -526,58 +518,6 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Notice List */}
-                <Card className="bg-gray-800/30 border border-gray-600/50">
-                  <CardHeader>
-                    <CardTitle className="text-gray-300">
-                      📋 기존 공지사항
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {notices.map((notice) => (
-                        <div
-                          key={notice.id}
-                          className="p-4 bg-gray-900/50 rounded-lg border border-gray-600/30"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-white">
-                              {notice.title}
-                            </h4>
-                            <div className="flex items-center space-x-2">
-                              <Badge
-                                className={
-                                  notice.active ? 'bg-green-600' : 'bg-gray-600'
-                                }
-                              >
-                                {notice.active ? '활성' : '비활성'}
-                              </Badge>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-blue-400 hover:text-blue-300"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-gray-300 text-sm mb-2">
-                            {notice.content}
-                          </p>
-                          <p className="text-gray-500 text-xs">{notice.date}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
               </TabsContent>
 
               {/* Problem Management Tab */}
@@ -592,6 +532,15 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
+                        <Label className="text-gray-300">문제 제목</Label>
+                        <Input
+                          value={problemTitle}
+                          onChange={(e) => setProblemTitle(e.target.value)}
+                          placeholder="예: A+B"
+                          className="bg-gray-900/50 border-purple-500/50 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <Label className="text-gray-300">백준 문제 번호</Label>
                         <Input
                           value={problemNumber}
@@ -601,20 +550,32 @@ export default function AdminPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-gray-300">또는 백준 링크</Label>
+                        <Label className="text-gray-300">백준 링크</Label>
                         <Input
                           value={problemLink}
                           onChange={(e) => setProblemLink(e.target.value)}
-                          placeholder="https://www.acmicpc.net/problem/1001"
+                          placeholder="예: https://www.acmicpc.net/problem/1001"
                           className="bg-gray-900/50 border-purple-500/50 text-white"
                         />
                       </div>
-                      <Alert className="bg-purple-900/20 border-purple-500/50">
-                        <AlertDescription className="text-purple-200">
-                          문제 번호나 링크 중 하나만 입력하면 자동으로 문제
-                          정보를 가져옵니다.
-                        </AlertDescription>
-                      </Alert>
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">난이도</Label>
+                        <Input
+                          value={problemDifficulty}
+                          onChange={(e) => setProblemDifficulty(e.target.value)}
+                          placeholder="예: B1, S2"
+                          className="bg-gray-900/50 border-purple-500/50 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">날짜</Label>
+                        <Input
+                          value={problemDay}
+                          onChange={(e) => setProblemDay(e.target.value)}
+                          placeholder="예: 28"
+                          className="bg-gray-900/50 border-purple-500/50 text-white"
+                        />
+                      </div>
                       <Button
                         onClick={handleProblemSubmit}
                         disabled={!problemNumber && !problemLink}
@@ -639,18 +600,6 @@ export default function AdminPage() {
                           <span className="text-gray-400">총 문제 수</span>
                           <span className="text-white font-bold">
                             {problems.length}개
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400">활성 문제</span>
-                          <span className="text-green-400 font-bold">
-                            {problems.filter((p) => p.active).length}개
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400">비활성 문제</span>
-                          <span className="text-red-400 font-bold">
-                            {problems.filter((p) => !p.active).length}개
                           </span>
                         </div>
                       </div>
@@ -679,68 +628,46 @@ export default function AdminPage() {
                             <th className="text-left py-2 text-gray-400">
                               난이도
                             </th>
+                            <th className="text-center py-2 text-gray-400">
+                              날짜
+                            </th>
                             <th className="text-right py-2 text-gray-400">
                               포인트
                             </th>
                             <th className="text-center py-2 text-gray-400">
-                              상태
-                            </th>
-                            <th className="text-center py-2 text-gray-400">
-                              액션
+                              삭제
                             </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {problems.map((problem) => (
-                            <tr
-                              key={problem.id}
-                              className="border-b border-gray-700/30 hover:bg-gray-800/20"
-                            >
+                          {problems.map((problem, index) => (
+                            <tr key={index} className="hover:bg-gray-800/20">
                               <td className="py-3 text-white font-mono">
-                                #{problem.number}
+                                #{problem.problemNumber}
                               </td>
                               <td className="py-3 text-white">
                                 {problem.title}
                               </td>
-                              <td className="py-3">
-                                <Badge
-                                  variant="outline"
-                                  className="text-yellow-400 border-yellow-400/50"
-                                >
-                                  {problem.difficulty}
-                                </Badge>
+                              <td className="py-3 text-gray-300">
+                                {problem.difficulty}
+                              </td>
+                              <td className="py-3 text-center text-white">
+                                {problem.day}
                               </td>
                               <td className="py-3 text-right text-green-400 font-bold">
-                                {problem.points}P
-                              </td>
+                                {problem.point}
+                              </td>{' '}
                               <td className="py-3 text-center">
-                                <Badge
-                                  className={
-                                    problem.active
-                                      ? 'bg-green-600'
-                                      : 'bg-gray-600'
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-400 hover:text-red-300"
+                                  onClick={() =>
+                                    handleDeleteProblem(problem.problemNumber)
                                   }
                                 >
-                                  {problem.active ? '활성' : '비활성'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 text-center">
-                                <div className="flex justify-center space-x-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-blue-400 hover:text-blue-300"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-red-400 hover:text-red-300"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </td>
                             </tr>
                           ))}
