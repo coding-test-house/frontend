@@ -197,7 +197,9 @@ export default function OddEvenGameModal({
     updateTimeLeft();
     const timer = setInterval(updateTimeLeft, 1000);
     const polling = setInterval(() => {
-      fetchGameData();
+      if (gamePhase === 'result' || gamePhase === 'betting') {
+        fetchGameData();
+      }
     }, 3000);
 
     return () => {
@@ -295,20 +297,13 @@ export default function OddEvenGameModal({
             <CardContent className="p-4 flex justify-between items-center">
               <div className="flex space-x-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400">
+                  <div className="text-[28px] font-bold text-yellow-400 leading-none h-[40px] w-[80px] font-mono text-center">
                     {displayTimeValue}
-                    <div className="text-sm text-gray-300">
+
+                    <div className="text-xs font-semibold text-gray-300 mt-1 whitespace-nowrap text-center">
                       {displayTimeText}
                     </div>
                   </div>
-
-                  {/* <div className="text-sm text-gray-300">
-                    {gamePhase === 'betting'
-                      ? '베팅 마감까지'
-                      : gamePhase === 'result'
-                      ? '게임 결과'
-                      : '주사위 굴리는 중...'}
-                  </div> */}
                 </div>
                 <div className="text-center">
                   <div className="text-yellow-400 font-bold">내 포인트</div>
@@ -317,30 +312,20 @@ export default function OddEvenGameModal({
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-yellow-400 font-bold">내 베팅</div>
+                  <div className="text-yellow-400  font-bold">내 베팅</div>
                   <div className="text-sm font-semibold text-white">
                     {getMyBetMessage()}
                   </div>
                 </div>
-              </div>
 
-              {gamePhase === 'result' && (
-                <Button
-                  onClick={() => {
-                    setGamePhase('betting');
-                    setTimeLeft(45);
-                    setSelectedSide(null);
-                    setBetAmount('');
-                    setResultType(null);
-                    setMyBet(null);
-                    fetchGameData();
-                  }}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  다음 게임
-                </Button>
-              )}
+                <div className="text-center min-w-[320px]">
+                  <div className="text-yellow-400 text-xl font-bold leading-snug min-h-[60px]">
+                    ⏱각 게임은 매 정각 00분부터 49분 59초까지 진행되며,
+                    <br />
+                    50분이 되면 결과가 공개됩니다!
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -507,7 +492,7 @@ export default function OddEvenGameModal({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-gray-300">액션</label>
+                    <label className="text-sm text-gray-300">베팅</label>
                     <Button
                       onClick={handleBet}
                       disabled={
