@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('accessToken');
     const storedUsername = localStorage.getItem('username');
     if (storedToken && storedUsername) {
       setToken(storedToken);
@@ -30,19 +30,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const login = (newToken: string, username: string) => {
-    localStorage.setItem('accesstoken', newToken);
+  const login = (accessToken: string, username: string) => {
+    localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('username', username);
-    setToken(newToken);
-
-    // const payload = JSON.parse(atob(newToken.split('.')[1]));
+    setToken(accessToken);
     setUser({ username: username });
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('username');
     setToken(null);
     setUser(null);
+    window.location.reload();
   };
 
   return (
