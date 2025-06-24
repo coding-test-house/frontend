@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
+import SessionSelectModal from './component/SessionSelectModal';
 export default function AuthPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('login');
@@ -154,13 +155,6 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // // 로그인 성공 애니메이션
-    // setIsEntering(true);
-    // await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // router.push('/');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -208,14 +202,6 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
-    // setIsLoading(true);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // // 회원가입 성공 애니메이션
-    // setIsEntering(true);
-    // await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // router.push('/');
   };
 
   if (isEntering) {
@@ -432,7 +418,8 @@ export default function AuthPage() {
                         disabled={
                           bojVerification.isVerifying ||
                           bojVerification.isVerified ||
-                          !registerData.bojId.trim()
+                          !registerData.bojId.trim() ||
+                          !registerData.sessionNumber
                         }
                         className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50"
                       >
@@ -513,27 +500,16 @@ export default function AuthPage() {
                       required
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="session-number" className="text-gray-300">
-                      회차 번호 <span className="text-red-400">*</span>
-                    </Label>
-                    <Input
-                      id="session-number"
-                      type="text"
-                      value={registerData.sessionNumber}
-                      onChange={(e) =>
-                        setRegisterData({
-                          ...registerData,
-                          sessionNumber: e.target.value,
-                        })
-                      }
-                      placeholder="예: 2024-1"
-                      className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
-                      required
-                    />
-                  </div>
-
+                  <SessionSelectModal
+                    sessionNumber={registerData.sessionNumber}
+                    onChange={(selected) =>
+                      setRegisterData({
+                        ...registerData,
+                        sessionNumber: selected,
+                      })
+                    }
+                    disabled={bojVerification.isVerified}
+                  />
                   <Button
                     type="submit"
                     disabled={
