@@ -2,10 +2,10 @@ version: '3'
 
 services:
   nextjs:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: cote-frontend
     restart: always
     ports:
       - '3000:3000'
-    env_file:
-      - .env.production
