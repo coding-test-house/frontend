@@ -222,50 +222,7 @@ export default function CoteHouse() {
             {/* Sidebar */}
             <div className="space-y-6">
               <RankingCard />
-              {/* Chat */}
-              {/* <Card className="bg-black/40 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-blue-300">
-                    <MessageCircle className="w-5 h-5" />
-                    <span>실시간 채팅</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 h-64 overflow-y-auto">
-                    {chatMessages.map((msg, index) => (
-                      <div
-                        key={index}
-                        className="p-2 bg-gray-800/30 rounded border-l-2 border-blue-400/50"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-blue-300 font-medium text-sm">
-                            {msg.user}
-                          </span>
-                          <span className="text-gray-400 text-xs">
-                            {msg.time}
-                          </span>
-                        </div>
-                        <p className="text-gray-200 text-sm">{msg.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex space-x-2">
-                    <Input
-                      placeholder="메시지를 입력하세요..."
-                      className="bg-gray-900/50 border-blue-500/50 text-white"
-                    />
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      전송
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card> */}
-              <RealTimeChat
-              // chatMessages={chatMessages}
-              // onSendMessage={(newMsg) =>
-              //   setChatMessages((prev) => [...prev, newMsg])
-              // }
-              />
+              <RealTimeChat />
             </div>
           </div>
         </div>
