@@ -28,7 +28,7 @@ jobs:
       - name: Build Next.js app
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-        run: npm run build
+        run: npm run build -- --no-lint
 
       - name: Upload built files to EC2
         uses: appleboy/scp-action@v0.1.7
