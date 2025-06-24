@@ -20,6 +20,7 @@ import { AuthProvider } from './auth/AuthContext';
 import RealTimeChat from './components/RealTimeChat';
 import Link from 'next/link';
 import OddEvenGameModal from './components/odd-even-modal';
+import axios from 'axios';
 import TodayNotice from './components/TodayNotice';
 import RankingCard from './components/RankingCard';
 import Navbar from './components/Navbar';
@@ -28,58 +29,101 @@ export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userPoints, setUserPoints] = useState(15420);
   const [selectedTab, setSelectedTab] = useState('전체');
-  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);
+  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
+
+  interface Problem {
+    id: number;
+    title: string;
+    difficulty: string;
+    points: number;
+    checked: boolean;
+  }
+
+  const [problemsState, setProblemsState] = useState<Problem[]>([]);
+  const username = 'leehk_py';
+  // const userId = '6658f86789d4af26695f8910'
+
   const { user, logout, isAuthenticated } = useAuth();
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const fetchData = async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const problemRes = await axios.get(`http://localhost:8080/api/admin/problem/${today}`);
+        const problemList = problemRes.data.data;
+        console.log(problemList)
+  
+        const problems = problemList.map((p: any) => ({
+          id: Number(p.problemNumber),
+          title: p.title,
+          difficulty: p.difficulty,
+          points: p.point,
+          checked: false,
+        }));
+  
+        const solvedRes = await axios.get(`http://localhost:8080/users/${username}/solved`);
+        const solvedIds: string[] = solvedRes.data;
+  
+        const updated = problems.map((problem: Problem) =>
+          solvedIds.includes(problem.id.toString())
+            ? { ...problem, checked: true }
+            : problem
+        );        
+  
+        setProblemsState(updated);
+      } catch (err) {
+        console.error('문제 또는 해결 정보 불러오기 실패:', err);
+      }
+    };
+  
+    fetchData(); 
   }, []);
+  
 
-  // const [chatMessages, setChatMessages] = useState<
-  //   {
-  //     user: string;
-  //     message: string;
-  //     time: string;
-  //   }[]
-  // >([]);
+  const handleProblemCheckClick = async (problemId: number) => {
+    try {
+      const response = await axios.get('http://localhost:8080/solvedCheck/check', {
+        params: {
+          user: username,
+          problem: problemId,
+        },
+      });
 
-  const problems = [
-    {
-      id: 1001,
-      title: 'A+B',
-      difficulty: '브론즈V',
-      points: 100,
-      betAmount: '',
-    },
-    {
-      id: 2557,
-      title: 'Hello World',
-      difficulty: '브론즈V',
-      points: 100,
-      betAmount: '',
-    },
-    {
-      id: 10950,
-      title: 'A+B - 3',
-      difficulty: '브론즈III',
-      points: 200,
-      betAmount: '',
-    },
-    {
-      id: 1008,
-      title: 'A/B',
-      difficulty: '브론즈IV',
-      points: 150,
-      betAmount: '',
-    },
-    {
-      id: 10998,
-      title: 'A×B',
-      difficulty: '브론즈V',
-      points: 100,
-      betAmount: '',
-    },
-  ];
+      const result = response.data;
+      if (result === true) {
+        // 문제 점수 찾아서 delta 설정
+        const delta = problemsState.find((p) => p.id === problemId)?.points ?? 0;
+
+        // 1. solved 기록 등록
+        await axios.post(`http://localhost:8080/users/${username}/solved/${problemId}`);
+
+        // 2. 포인트 증가 요청
+        const userScoreRequestData = {
+          username: username,
+          delta: delta,
+        };
+
+        await axios.patch('http://localhost:8080/api/admin/points', userScoreRequestData);
+
+        // 3. 상태 업데이트
+        const updated = problemsState.map((problem) =>
+          problem.id === problemId ? { ...problem, checked: true } : problem
+        );
+        setProblemsState(updated);
+
+        alert('풀이 성공! 포인트가 반영되었습니다.');
+      } else {
+        alert('문제를 풀고 체크해주세요!');
+      }
+    } catch (error) {
+      console.error('요청 실패:', error);
+      alert('오류가 발생했습니다.');
+    }
+  }
+
+  // useEffect(() => {
+  //   console.log('🔁 상태 변경됨:', problemsState);
+  // }, [problemsState]);
+  
 
   const games = [
     {
@@ -138,7 +182,7 @@ export default function CoteHouse() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-3">
-                    {problems.map((problem) => (
+                    {problemsState.map((problem) => (
                       <div
                         key={problem.id}
                         className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-600/50 hover:border-green-400/50 transition-all"
@@ -161,16 +205,18 @@ export default function CoteHouse() {
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Input
-                            placeholder="베팅 포인트"
-                            className="w-32 bg-gray-900/50 border-purple-500/50 text-white"
-                          />
-                          <Button
-                            size="sm"
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                          >
-                            베팅
-                          </Button>
+                        <Button
+                          size="sm"
+                          className={`transition-all ${
+                            problem.checked
+                              ? 'bg-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                          }`}
+                          onClick={() => handleProblemCheckClick(problem.id)}
+                          disabled={problem.checked}
+                        >
+                          {problem.checked ? '제출완료' : '제출 ㄱ?'}
+                        </Button>
                         </div>
                       </div>
                     ))}
