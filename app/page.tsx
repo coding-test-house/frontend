@@ -25,11 +25,14 @@ import TodayNotice from './components/TodayNotice';
 import RankingCard from './components/RankingCard';
 import Navbar from './components/Navbar';
 
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userPoints, setUserPoints] = useState(15420);
   const [selectedTab, setSelectedTab] = useState('전체');
   const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
+  const [username, setUsername] = useState<string | null>(null);
 
   interface Problem {
     id: number;
@@ -40,15 +43,20 @@ export default function CoteHouse() {
   }
 
   const [problemsState, setProblemsState] = useState<Problem[]>([]);
-  const username = 'leehk_py';
   // const userId = '6658f86789d4af26695f8910'
 
   const { user, logout, isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    const saved = localStorage.getItem("username") || null;
+    setUsername(saved);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const problemRes = await axios.get(`http://localhost:8080/api/admin/problem/${today}`);
+        const problemRes = await axios.get(`${baseURL}/admin/problem/${today}`);
         const problemList = problemRes.data.data;
         console.log(problemList)
   
@@ -60,7 +68,10 @@ export default function CoteHouse() {
           checked: false,
         }));
   
-        const solvedRes = await axios.get(`http://localhost:8080/users/${username}/solved`);
+        const storageUsername = localStorage.getItem("username");
+        setUsername(storageUsername);
+
+        const solvedRes = await axios.get(`${baseURL}/users/${storageUsername}/solved`);
         const solvedIds: string[] = solvedRes.data;
   
         const updated = problems.map((problem: Problem) =>
@@ -81,7 +92,7 @@ export default function CoteHouse() {
 
   const handleProblemCheckClick = async (problemId: number) => {
     try {
-      const response = await axios.get('http://localhost:8080/solvedCheck/check', {
+      const response = await axios.get(`${baseURL}/solvedCheck/check`, {
         params: {
           user: username,
           problem: problemId,
@@ -94,7 +105,7 @@ export default function CoteHouse() {
         const delta = problemsState.find((p) => p.id === problemId)?.points ?? 0;
 
         // 1. solved 기록 등록
-        await axios.post(`http://localhost:8080/users/${username}/solved/${problemId}`);
+        await axios.post(`${baseURL}/users/${username}/solved/${problemId}`);
 
         // 2. 포인트 증가 요청
         const userScoreRequestData = {
@@ -102,7 +113,7 @@ export default function CoteHouse() {
           delta: delta,
         };
 
-        await axios.patch('http://localhost:8080/api/admin/points', userScoreRequestData);
+        await axios.patch(`${baseURL}/admin/points`, userScoreRequestData);
 
         // 3. 상태 업데이트
         const updated = problemsState.map((problem) =>
@@ -205,16 +216,18 @@ export default function CoteHouse() {
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Input
-                            placeholder="베팅 포인트"
-                            className="w-32 bg-gray-900/50 border-purple-500/50 text-white"
-                          />
-                          <Button
-                            size="sm"
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                          >
-                            베팅
-                          </Button>
+                        <Button
+                          size="sm"
+                          className={`transition-all ${
+                            problem.checked
+                              ? 'bg-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                          }`}
+                          onClick={() => handleProblemCheckClick(problem.id)}
+                          disabled={problem.checked}
+                        >
+                          {problem.checked ? '제출완료' : '제출 ㄱ?'}
+                        </Button>
                         </div>
                       </div>
                     ))}
