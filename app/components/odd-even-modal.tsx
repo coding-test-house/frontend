@@ -169,7 +169,9 @@ export default function OddEvenGameModal({
 
         setMyBet(data.myBet);
         setResultType(data.resultType);
-        setSelectedSide(data.myBet?.betType ?? null);
+        if (gamePhase !== 'betting') {
+          setSelectedSide(data.myBet?.betType ?? null);
+        }
       }
     } catch (error) {
       console.error(error);
