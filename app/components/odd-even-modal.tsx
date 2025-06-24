@@ -36,6 +36,7 @@ interface BetSummaryResponseDto {
   };
   myBet: { betType: 'odd' | 'even'; betAmount: number } | null;
   resultType: 'odd' | 'even' | null;
+  userGameResults?: string[][];
 }
 
 interface OddEvenGameModalProps {
@@ -69,6 +70,7 @@ export default function OddEvenGameModal({
     betAmount: number;
   } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [userGameResults, setUserGameResults] = useState<string[][]>([]);
 
   const previousPoolRef = useRef<{ oddTotal: number; evenTotal: number }>({
     oddTotal: 0,
@@ -172,16 +174,19 @@ export default function OddEvenGameModal({
         if (gamePhase !== 'betting') {
           setSelectedSide(data.myBet?.betType ?? null);
         }
+        if (data.userGameResults) {
+          setUserGameResults(data.userGameResults);
+        }
       }
     } catch (error) {
       console.error(error);
       alert('게임 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   }, [username, initialized]);
-
   useEffect(() => {
     if (gamePhase === 'result') {
       fetchGameData();
+      fetchUserPoints();
     }
   }, [gamePhase, fetchGameData]);
 
@@ -206,7 +211,7 @@ export default function OddEvenGameModal({
       } else if (minutes === 50 && seconds < 30) {
         setTimeLeft(30 - seconds);
         setGamePhase('rolling'); // 결과 계산 중
-      } else {
+      } else if (minutes === 50 && seconds >= 30) {
         setTimeLeft(nextRoundStartSeconds);
         setGamePhase('result'); // 결과 보여주고 다음 라운드까지 대기
         fetchGameData();
@@ -307,7 +312,9 @@ export default function OddEvenGameModal({
               <span>🎲 홀짝 게임</span>
               <Dice2 className="w-8 h-8 text-red-400" />
             </div>
-            <span className="text-yellow-400">결과 적중시 포인트 2배!</span>
+            <span className="text-yellow-400">
+              배팅은 기술! 이기면 상대 포인트도 나눠가져요 😎
+            </span>
             <Button
               variant="ghost"
               onClick={onClose}
@@ -324,9 +331,8 @@ export default function OddEvenGameModal({
             <CardContent className="p-4 flex justify-between items-center">
               <div className="flex space-x-6">
                 <div className="text-center">
-                  <div className="text-[28px] font-bold text-yellow-400 leading-none h-[40px] w-[80px] font-mono text-center">
+                  <div className="text-[28px] font-bold text-yellow-400 leading-none h-[40px] w-[80px] text-center">
                     {displayTimeValue}
-
                     <div className="text-xs font-semibold text-gray-300 mt-1 whitespace-nowrap text-center">
                       {displayTimeText}
                     </div>
@@ -334,7 +340,7 @@ export default function OddEvenGameModal({
                 </div>
                 <div className="text-center">
                   <div className="text-yellow-400 font-bold">내 포인트</div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xl font-bold text-white h-[40px] w-[80px]">
                     {userPoints.toLocaleString()}P
                   </div>
                 </div>
