@@ -133,10 +133,16 @@ export default function OddEvenGameModal({
       const newEvenTotal = data.even.totalBet;
 
       const { oddTotal, evenTotal } = previousPoolRef.current;
-
       const hasChanged = newOddTotal !== oddTotal || newEvenTotal !== evenTotal;
+      const hasResultChanged =
+        data.resultType !== resultType ||
+        JSON.stringify(data.myBet) !== JSON.stringify(myBet);
 
-      if (hasChanged || !initialized) {
+      if (
+        hasChanged ||
+        hasResultChanged ||
+        (!initialized && gamePhase !== 'rolling')
+      ) {
         previousPoolRef.current = {
           oddTotal: newOddTotal,
           evenTotal: newEvenTotal,
@@ -145,19 +151,27 @@ export default function OddEvenGameModal({
         setBettingPools({
           odd: {
             total: newOddTotal,
-            top: convertTopBettors(data.odd.topBettors),
+            top: data.odd.topBettors.map(({ username, amount }) => ({
+              username,
+              betAmount: amount,
+            })),
             betCount: data.odd.topBettors.length,
           },
           even: {
             total: newEvenTotal,
-            top: convertTopBettors(data.even.topBettors),
+            top: data.even.topBettors.map(({ username, amount }) => ({
+              username,
+              betAmount: amount,
+            })),
             betCount: data.even.topBettors.length,
           },
         });
 
         setMyBet(data.myBet);
         setResultType(data.resultType);
-        setSelectedSide(data.myBet?.betType ?? null);
+        if (gamePhase !== 'betting') {
+          setSelectedSide(data.myBet?.betType ?? null);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -179,32 +193,38 @@ export default function OddEvenGameModal({
       const seconds = now.getSeconds();
       const currentTotalSeconds = minutes * 60 + seconds;
 
+      const roundEndSeconds = 50 * 60;
+      const nextHour = new Date(now);
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      const nextRoundStartSeconds = Math.floor(
+        (nextHour.getTime() - now.getTime()) / 1000
+      );
+
       if (minutes < 50) {
-        const roundEndSeconds = 50 * 60;
         setTimeLeft(roundEndSeconds - currentTotalSeconds);
         setGamePhase('betting');
+      } else if (minutes === 50 && seconds < 30) {
+        setTimeLeft(30 - seconds);
+        setGamePhase('rolling'); // 결과 계산 중
       } else {
-        const nextHour = new Date(now);
-        nextHour.setHours(now.getHours() + 1, 0, 0, 0);
-        const nextRoundStartSeconds = Math.floor(
-          (nextHour.getTime() - now.getTime()) / 1000
-        );
         setTimeLeft(nextRoundStartSeconds);
-        setGamePhase('result');
+        setGamePhase('result'); // 결과 보여주고 다음 라운드까지 대기
+        fetchGameData();
       }
     };
 
     updateTimeLeft();
     const timer = setInterval(updateTimeLeft, 1000);
+
     const polling = setInterval(() => {
       fetchGameData();
-    }, 3000);
+    }, 1000);
 
     return () => {
       clearInterval(timer);
       clearInterval(polling);
     };
-  }, [isOpen, fetchGameData]);
+  }, [isOpen, fetchGameData, gamePhase]);
 
   const handleBet = async () => {
     if (
@@ -241,7 +261,7 @@ export default function OddEvenGameModal({
       fetchGameData();
     } catch (error) {
       console.error(error);
-      alert('베팅 중 오류가 발생했습니다.');
+      alert('홀 또는 짝 한곳에만 베팅이 가능합니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -265,9 +285,17 @@ export default function OddEvenGameModal({
   };
 
   const displayTimeText =
-    gamePhase === 'betting' ? '베팅 마감까지' : '게임 오픈까지';
+    gamePhase === 'betting'
+      ? '베팅 마감까지'
+      : gamePhase === 'rolling'
+      ? '결과 공개까지'
+      : '게임 시작까지';
   const displayTimeValue =
-    gamePhase === 'betting' ? formatTime(timeLeft) : formatTime(timeLeft);
+    gamePhase === 'betting'
+      ? formatTime(timeLeft)
+      : gamePhase === 'rolling'
+      ? formatTime(timeLeft)
+      : formatTime(timeLeft);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -279,6 +307,7 @@ export default function OddEvenGameModal({
               <span>🎲 홀짝 게임</span>
               <Dice2 className="w-8 h-8 text-red-400" />
             </div>
+            <span className="text-yellow-400">결과 적중시 포인트 2배!</span>
             <Button
               variant="ghost"
               onClick={onClose}
@@ -295,20 +324,13 @@ export default function OddEvenGameModal({
             <CardContent className="p-4 flex justify-between items-center">
               <div className="flex space-x-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400">
+                  <div className="text-[28px] font-bold text-yellow-400 leading-none h-[40px] w-[80px] font-mono text-center">
                     {displayTimeValue}
-                    <div className="text-sm text-gray-300">
+
+                    <div className="text-xs font-semibold text-gray-300 mt-1 whitespace-nowrap text-center">
                       {displayTimeText}
                     </div>
                   </div>
-
-                  {/* <div className="text-sm text-gray-300">
-                    {gamePhase === 'betting'
-                      ? '베팅 마감까지'
-                      : gamePhase === 'result'
-                      ? '게임 결과'
-                      : '주사위 굴리는 중...'}
-                  </div> */}
                 </div>
                 <div className="text-center">
                   <div className="text-yellow-400 font-bold">내 포인트</div>
@@ -317,30 +339,20 @@ export default function OddEvenGameModal({
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-yellow-400 font-bold">내 베팅</div>
+                  <div className="text-yellow-400  font-bold">내 베팅</div>
                   <div className="text-sm font-semibold text-white">
                     {getMyBetMessage()}
                   </div>
                 </div>
-              </div>
 
-              {gamePhase === 'result' && (
-                <Button
-                  onClick={() => {
-                    setGamePhase('betting');
-                    setTimeLeft(45);
-                    setSelectedSide(null);
-                    setBetAmount('');
-                    setResultType(null);
-                    setMyBet(null);
-                    fetchGameData();
-                  }}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  다음 게임
-                </Button>
-              )}
+                <div className="text-center min-w-[320px]">
+                  <div className="text-yellow-400 text-xl font-bold leading-snug min-h-[60px]">
+                    ⏱각 게임은 매 정각 00분부터 49분 59초까지 진행되며,
+                    <br />
+                    50분이 되면 결과가 공개됩니다!
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -507,7 +519,7 @@ export default function OddEvenGameModal({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-gray-300">액션</label>
+                    <label className="text-sm text-gray-300">베팅</label>
                     <Button
                       onClick={handleBet}
                       disabled={
@@ -539,7 +551,7 @@ export default function OddEvenGameModal({
                   <span className="text-sm text-gray-400 self-center">
                     빠른 베팅:
                   </span>
-                  {[1000, 5000, 10000, '올인'].map((amount) => (
+                  {[500, 1000, 5000, '올인'].map((amount) => (
                     <Button
                       key={amount}
                       size="sm"
