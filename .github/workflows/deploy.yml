@@ -27,13 +27,15 @@ jobs:
 
       - name: Create .env.production on EC2
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/cote-house/frontend
-            echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" > .env.production
+            echo "NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL" > .env.production
 
       - name: SSH and deploy frontend
         uses: appleboy/ssh-action@v1.0.0
