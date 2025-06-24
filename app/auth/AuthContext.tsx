@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('accessToken');
     const storedUsername = localStorage.getItem('username');
     if (storedToken && storedUsername) {
       setToken(storedToken);
@@ -34,8 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('username', username);
     setToken(accessToken);
-
-    // const payload = JSON.parse(atob(newToken.split('.')[1]));
     setUser({ username: username });
   };
 
@@ -44,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('username');
     setToken(null);
     setUser(null);
+    window.location.reload();
   };
 
   return (
