@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface RankingData {
   username: string;
@@ -15,9 +22,23 @@ interface RankingData {
 
 export default function RankingCard() {
   const [selectedTab, setSelectedTab] = useState('전체');
+  const [selectedClassName, setSelectedClassName] = useState('11회차');
   const [rankings, setRankings] = useState<RankingData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const classes = [
+    '11회차',
+    '12회차',
+    '13회차',
+    '14회차',
+    '15회차',
+    '16회차',
+    '17회차',
+    '18회차',
+    '19회차',
+    '20회차',
+  ];
 
   const fetchRankings = async (tab: string) => {
     setLoading(true);
@@ -31,7 +52,7 @@ export default function RankingCard() {
         // 이번 회차의 경우 클래스명을 어떻게 결정할지에 따라 수정 필요
         // 예시로 특정 클래스명을 사용하거나, 현재 사용자의 클래스를 사용할 수 있습니다
         const className = '11회차'; // 실제 구현에서는 적절한 클래스명으로 변경
-        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/toprank/class/${className}`;
+        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/toprank/class/${selectedClassName}`;
       }
 
       // const response = await axios.get<RankingData[]>(url);
@@ -48,7 +69,7 @@ export default function RankingCard() {
 
   useEffect(() => {
     fetchRankings(selectedTab);
-  }, [selectedTab]);
+  }, [selectedTab, selectedClassName]);
 
   const handleTabChange = (tab: string) => {
     setSelectedTab(tab);
@@ -62,7 +83,7 @@ export default function RankingCard() {
           <span>실시간 랭킹</span>
         </CardTitle>
         <div className="flex space-x-2">
-          {['전체', '이번 회차'].map((tab) => (
+          {['전체', '회차선택'].map((tab) => (
             <Button
               key={tab}
               size="sm"
@@ -77,6 +98,23 @@ export default function RankingCard() {
               {tab}
             </Button>
           ))}
+          {selectedTab === '회차선택' && (
+            <Select
+              value={selectedClassName}
+              onValueChange={setSelectedClassName}
+            >
+              <SelectTrigger className="w-[120px] border-yellow-400 text-yellow-300">
+                <SelectValue placeholder="회차 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((round) => (
+                  <SelectItem key={round} value={round}>
+                    {round}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardHeader>
       <CardContent>

@@ -1,0 +1,12 @@
+FROM node:18-alpine AS builder
+WORKDIR /app
+# package.json 복사 및 프로덕션 의존성만 설치
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+# 빌드된 파일들 복사
+COPY .next/standalone ./
+COPY .next/static ./.next/static
+COPY public ./public
+EXPOSE 3000
+# standalone 모드에서는 server.js로 실행
+CMD ["node", "server.js"]

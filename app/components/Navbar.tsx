@@ -4,9 +4,29 @@ import Link from 'next/link';
 import { useAuth } from '@/app/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { User, Coins, Crown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
+  const [point, setPoint] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchPoint = async () => {
+      if (!user?.username) return;
+
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${user.username}/point`
+        );
+        console.log(res.data);
+        setPoint(res.data.point);
+      } catch (err) {
+        console.error('포인트 조회 실패', err);
+      }
+    };
+    fetchPoint();
+  }, [user?.username]);
 
   return (
     <nav className="border-b border-purple-500/30 bg-black/20 backdrop-blur-sm">
@@ -52,7 +72,7 @@ export default function Navbar() {
                 <div className="flex items-center space-x-1">
                   <Coins className="w-4 h-4 text-yellow-400" />
                   <span className="text-yellow-400 font-bold">
-                    hardcoded point
+                    {point !== null ? `${point.toLocaleString()}P` : '...P'}
                   </span>
                 </div>
                 <Button
