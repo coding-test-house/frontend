@@ -22,7 +22,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: 'frontend'
+          source: '.'
           target: '~/cote-house'
 
       - name: Create .env.production on EC2
