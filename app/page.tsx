@@ -25,69 +25,52 @@ export default function CoteHouse() {
   const [selectedTab, setSelectedTab] = useState('전체');
   const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
 
-  const problems = [
-    {
-      id: 1001,
-      title: 'A+B',
-      difficulty: '브론즈V',
-      points: 100,
-      checked: false,
-    },
-    {
-      id: 2557,
-      title: 'Hello World',
-      difficulty: '브론즈V',
-      points: 100,
-      checked: false,
-    },
-    {
-      id: 10950,
-      title: 'A+B - 3',
-      difficulty: '브론즈III',
-      points: 200,
-      checked: false,
-    },
-    {
-      id: 1008,
-      title: 'A/B',
-      difficulty: '브론즈IV',
-      points: 150,
-      checked: false,
-    },
-    {
-      id: 10998,
-      title: 'A×B',
-      difficulty: '브론즈V',
-      points: 100,
-      checked: false,
-    },
-  ];
+  interface Problem {
+    id: number;
+    title: string;
+    difficulty: string;
+    points: number;
+    checked: boolean;
+  }
 
-  const [problemsState, setProblemsState] = useState(problems);
+  const [problemsState, setProblemsState] = useState<Problem[]>([]);
   const username = 'leehk_py';
+  // const userId = '6658f86789d4af26695f8910'
+
   useEffect(() => {
-    const fetchSolvedProblems = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8080/users/${username}/solved`
-        );
-        const solvedIds: string[] = res.data; // 예: ["1001", "10950"]
-        
-        console.log(solvedIds);
-        const updated = problemsState.map((problem) =>
+        const today = new Date().toISOString().slice(0, 10);
+        const problemRes = await axios.get(`http://localhost:8080/api/admin/problem/${today}`);
+        const problemList = problemRes.data.data;
+        console.log(problemList)
+  
+        const problems = problemList.map((p: any) => ({
+          id: Number(p.problemNumber),
+          title: p.title,
+          difficulty: p.difficulty,
+          points: p.point,
+          checked: false,
+        }));
+  
+        const solvedRes = await axios.get(`http://localhost:8080/users/${username}/solved`);
+        const solvedIds: string[] = solvedRes.data;
+  
+        const updated = problems.map((problem: Problem) =>
           solvedIds.includes(problem.id.toString())
             ? { ...problem, checked: true }
-            : { ...problem, checked: false }
-        );
-
+            : problem
+        );        
+  
         setProblemsState(updated);
-      } catch (error) {
-        console.error('유저 해결 문제 불러오기 실패', error);
+      } catch (err) {
+        console.error('문제 또는 해결 정보 불러오기 실패:', err);
       }
     };
   
-    fetchSolvedProblems();
+    fetchData(); 
   }, []);
+  
 
   const handleProblemCheckClick = async (problemId: number) => {
     try {
@@ -98,17 +81,29 @@ export default function CoteHouse() {
         },
       });
 
-      console.log(response);
-
       const result = response.data;
       if (result === true) {
+        // 문제 점수 찾아서 delta 설정
+        const delta = problemsState.find((p) => p.id === problemId)?.points ?? 0;
+
+        // 1. solved 기록 등록
         await axios.post(`http://localhost:8080/users/${username}/solved/${problemId}`);
 
+        // 2. 포인트 증가 요청
+        const userScoreRequestData = {
+          username: username,
+          delta: delta,
+        };
+
+        await axios.patch('http://localhost:8080/api/admin/points', userScoreRequestData);
+
+        // 3. 상태 업데이트
         const updated = problemsState.map((problem) =>
           problem.id === problemId ? { ...problem, checked: true } : problem
         );
         setProblemsState(updated);
-        alert('풀이 성공');
+
+        alert('풀이 성공! 포인트가 반영되었습니다.');
       } else {
         alert('문제를 풀고 체크해주세요!');
       }
@@ -118,9 +113,9 @@ export default function CoteHouse() {
     }
   }
 
-  useEffect(() => {
-    console.log('🔁 상태 변경됨:', problemsState);
-  }, [problemsState]);
+  // useEffect(() => {
+  //   console.log('🔁 상태 변경됨:', problemsState);
+  // }, [problemsState]);
   
 
   const games = [
