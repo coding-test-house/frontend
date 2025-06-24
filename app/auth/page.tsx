@@ -119,7 +119,7 @@ export default function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.username || !loginData.password) return;
-
+    console.log(loginData);
     setIsLoading(true);
     try {
       const res = await fetch(
@@ -140,9 +140,11 @@ export default function AuthPage() {
 
       // 예: 토큰 처리 및 라우팅
       const data = await res.json();
+      const accessToken = data.data.accessToken;
       console.log('로그인 성공:', data);
-      login(data.accessToken, data.username);
+      login(accessToken, loginData.username);
       localStorage.setItem('username', loginData.username);
+      localStorage.setItem('accessToken', accessToken);
       setIsEntering(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       router.push('/');
@@ -200,7 +202,7 @@ export default function AuthPage() {
 
       setIsEntering(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      router.push('/');
+      window.location.reload();
     } catch (err) {
       alert('회원가입에 실패했습니다.');
     } finally {
