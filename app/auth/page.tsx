@@ -140,9 +140,12 @@ export default function AuthPage() {
 
       // 예: 토큰 처리 및 라우팅
       const data = await res.json();
+      const accessToken = data.data.accessToken;
+      const username = data.data.username;
       console.log('로그인 성공:', data);
-      login(data.accessToken, data.username);
-      localStorage.setItem('username', loginData.username);
+      login(accessToken, username);
+      localStorage.setItem('username', username);
+      localStorage.setItem('accessToken', accessToken);
       setIsEntering(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       router.push('/');

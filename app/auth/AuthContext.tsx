@@ -30,17 +30,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const login = (newToken: string, username: string) => {
-    localStorage.setItem('accesstoken', newToken);
+  const login = (accessToken: string, username: string) => {
+    localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('username', username);
-    setToken(newToken);
+    setToken(accessToken);
 
     // const payload = JSON.parse(atob(newToken.split('.')[1]));
     setUser({ username: username });
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('username');
     setToken(null);
     setUser(null);
   };
