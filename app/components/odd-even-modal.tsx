@@ -215,11 +215,10 @@ export default function OddEvenGameModal({
         setGamePhase('betting');
       } else if (minutes === 50 && seconds < 30) {
         setTimeLeft(30 - seconds);
-        setGamePhase('rolling'); // 결과 계산 중
-      } else if (minutes === 50 && seconds >= 30) {
+        setGamePhase('rolling');
+      } else {
         setTimeLeft(nextRoundStartSeconds);
-        setGamePhase('result'); // 결과 보여주고 다음 라운드까지 대기
-        // fetchGameData();
+        setGamePhase('result');
       }
     };
 
