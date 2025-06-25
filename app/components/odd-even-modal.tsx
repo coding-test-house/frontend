@@ -177,12 +177,14 @@ export default function OddEvenGameModal({
         if (data.userGameResults) {
           setUserGameResults(data.userGameResults);
         }
+        // fetchUserPoints();
       }
     } catch (error) {
       console.error(error);
       alert('게임 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   }, [username, initialized]);
+
   useEffect(() => {
     if (gamePhase === 'result') {
       fetchGameData();
@@ -218,18 +220,32 @@ export default function OddEvenGameModal({
       }
     };
 
+    //   updateTimeLeft();
+    //   const timer = setInterval(updateTimeLeft, 1000);
+
+    //   const polling = setInterval(() => {
+    //     fetchGameData();
+    //   }, 1000);
+
+    //   return () => {
+    //     clearInterval(timer);
+    //     clearInterval(polling);
+    //   };
+    // }, [isOpen, fetchGameData, gamePhase]);
     updateTimeLeft();
     const timer = setInterval(updateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || gamePhase === 'rolling') return;
 
     const polling = setInterval(() => {
       fetchGameData();
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
-      clearInterval(polling);
-    };
-  }, [isOpen, fetchGameData, gamePhase]);
+    return () => clearInterval(polling);
+  }, [isOpen, gamePhase, fetchGameData]);
 
   const handleBet = async () => {
     if (

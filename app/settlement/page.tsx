@@ -1,13 +1,27 @@
 'use client';
 
-import { useEffect, useState } from "react"
-import { ArrowLeft, TrendingUp, TrendingDown, Coins, Calendar, Filter, Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Link from "next/link"
-import axios from "axios"
+import { useEffect, useState } from 'react';
+import {
+  ArrowLeft,
+  TrendingUp,
+  TrendingDown,
+  Coins,
+  Calendar,
+  Filter,
+  Download,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import Link from 'next/link';
+import axios from 'axios';
 import { useMemo } from 'react';
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -120,7 +134,7 @@ export default function SettlementPage() {
   const totalStats = useMemo(() => {
     let totalEarned = 0;
     let totalSpent = 0;
-  
+
     transactions.forEach((t) => {
       if (typeof t.amount === 'number') {
         if (t.amount > 0) {
@@ -130,9 +144,9 @@ export default function SettlementPage() {
         }
       }
     });
-  
+
     const netProfit = totalEarned - totalSpent;
-  
+
     return {
       totalEarned,
       totalSpent,
@@ -143,15 +157,15 @@ export default function SettlementPage() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "게임승리":
-      case "문제해결":
-      case "베팅성공":
-      case "베팅 성공":
-        return "text-green-400 bg-green-400/10 border-green-400/30"
-      case "게임패배":
-        return "text-red-400 bg-red-400/10 border-red-400/30"
-      case "베팅":
-        return "text-yellow-400 bg-yellow-400/10 border-yellow-400/30"
+      case '게임승리':
+      case '문제해결':
+      case '베팅성공':
+      case '베팅 성공':
+        return 'text-green-400 bg-green-400/10 border-green-400/30';
+      case '게임패배':
+        return 'text-red-400 bg-red-400/10 border-red-400/30';
+      case '베팅':
+        return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30';
       default:
         return 'text-gray-400 bg-gray-400/10 border-gray-400/30';
     }
