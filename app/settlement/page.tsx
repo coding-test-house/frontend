@@ -95,14 +95,26 @@ export default function SettlementPage() {
             runningBalance += amount;
 
             const dateObj = new Date(item.time);
-            const dateStr = dateObj.toISOString();
+            const date = dateObj
+              .toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })
+              .replace(/\. /g, '-')
+              .replace('.', '');
+
+            const time = dateObj.toLocaleTimeString('ko-KR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            });
             mapped.push({
               id: index + 1,
-              date: dateStr.slice(0, 10),
-              time: dateStr.slice(11, 16),
+              date,
+              time,
               type: item.type || '베팅',
               reason: item.reason || '상세 정보 없음',
-
               amount,
               balance: runningBalance,
               category: item.category || getCategory(amount),
