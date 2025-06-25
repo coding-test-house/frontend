@@ -77,6 +77,9 @@ export default function SettlementPage() {
     let totalEarned = 0;
     let totalSpent = 0;
   
+    let bettingSuccessCount = 0;
+    let bettingFailCount = 0;
+  
     transactions.forEach((t) => {
       if (typeof t.amount === 'number') {
         if (t.amount > 0) {
@@ -85,17 +88,26 @@ export default function SettlementPage() {
           totalSpent += Math.abs(t.amount);
         }
       }
+  
+      if (t.type === "베팅 성공") {
+        bettingSuccessCount++;
+      } else if (t.type === "베팅 실패") {
+        bettingFailCount++;
+      }
     });
   
     const netProfit = totalEarned - totalSpent;
+    const totalBetting = bettingSuccessCount + bettingFailCount;
+    const winRate = totalBetting === 0 ? 0 : (bettingSuccessCount / totalBetting) * 100;
   
     return {
       totalEarned,
       totalSpent,
       netProfit,
-      winRate: 68.5, // 임시 고정
+      winRate: parseFloat(winRate.toFixed(1)), // 소수점 1자리
     };
   }, [transactions]);
+  
 
   const getTypeColor = (type: string) => {
     switch (type) {
