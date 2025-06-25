@@ -44,11 +44,7 @@ export default function SettlementPage() {
               date: item.time.slice(0, 10),
               time: item.time.slice(11, 16) || '00:30',
               type: item.type || "기타",
-<<<<<<< HEAD
               reason: item.reason || "상세 정보 없음",
-=======
-              description: item.description || "상세 정보 없음",
->>>>>>> ec9703e0fde18a8e71cd9d6815ccc18d26ed1f37
               amount,
               balance: runningBalance,
               category: item.category || getCategory(amount),
@@ -145,17 +141,30 @@ export default function SettlementPage() {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
       const now = new Date();
-      const transactionDate = new Date(`${t.date}T${t.time}`);
+      const dateStr = t.date || "";
+      const timeStr = t.time || "00:00";
   
-      // 1. 날짜 필터 조건
+      // transactionDate를 UTC로 생성 (시간 없으면 00:00으로)
+      const transactionDate = new Date(`${dateStr}T${timeStr}`);
+  
+      // 00:00:00 기준 날짜만 비교용 함수
+      const normalizeDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+      // 날짜 필터 조건
       let dateMatch = true;
       if (selectedPeriod === "오늘") {
-        dateMatch = transactionDate.toDateString() === now.toDateString();
+        dateMatch = normalizeDate(transactionDate).getTime() === normalizeDate(now).getTime();
       } else if (selectedPeriod === "이번주") {
+        // 이번주 시작 (일요일 0시)
         const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay()); // 주 시작 (일요일)
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+  
+        // 이번주 끝 (토요일 23:59:59)
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+  
         dateMatch = transactionDate >= startOfWeek && transactionDate <= endOfWeek;
       } else if (selectedPeriod === "이번달") {
         dateMatch =
@@ -163,29 +172,19 @@ export default function SettlementPage() {
           transactionDate.getFullYear() === now.getFullYear();
       }
   
-      // 2. 유형 필터 조건
-<<<<<<< HEAD
+      if (!dateMatch) return false;
+  
+      // 유형 필터 조건
       if (selectedType === "전체") return true;
       if (selectedType === "수익") return t.amount > 0;
       if (selectedType === "지출") return t.amount < 0;
-      if (selectedType === "베팅") return t.type === "베팅" || t.type === "베팅 성공" || t.type === "베팅성공";
+      if (selectedType === "베팅") return ["베팅", "베팅 성공", "베팅성공"].includes(t.type);
       if (selectedType === "문제해결") return t.type === "문제해결";
   
       return true;
-=======
-      let typeMatch = true;
-      if (selectedType === "수익") {
-        typeMatch = t.amount > 0;
-      } else if (selectedType === "지출") {
-        typeMatch = t.amount < 0;
-      } else if (selectedType === "베팅") {
-        typeMatch = t.type.includes("베팅");
-      }
-  
-      return dateMatch && typeMatch;
->>>>>>> ec9703e0fde18a8e71cd9d6815ccc18d26ed1f37
     });
   }, [transactions, selectedPeriod, selectedType]);
+  
   
 
   return (
