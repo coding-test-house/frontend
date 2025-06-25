@@ -93,6 +93,11 @@ export default function OddEvenGameModal({
       setInitialized(true);
     }
   }, [username, isOpen, initialized]);
+  useEffect(() => {
+    if (isOpen) {
+      setInitialized(false);
+    }
+  }, [isOpen]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
