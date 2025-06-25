@@ -10,6 +10,7 @@ import {
   TrendingUp,
   TrendingDown,
   Crown,
+  AwardIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,11 +26,14 @@ import TodayNotice from './components/TodayNotice';
 import RankingCard from './components/RankingCard';
 import Navbar from './components/Navbar';
 
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userPoints, setUserPoints] = useState(15420);
   const [selectedTab, setSelectedTab] = useState('전체');
   const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
+  const [username, setUsername] = useState<string | null>(null);
 
   interface Problem {
     id: number;
@@ -40,15 +44,20 @@ export default function CoteHouse() {
   }
 
   const [problemsState, setProblemsState] = useState<Problem[]>([]);
-  const username = 'leehk_py';
   // const userId = '6658f86789d4af26695f8910'
 
   const { user, logout, isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    const saved = localStorage.getItem("username") || null;
+    setUsername(saved);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const problemRes = await axios.get(`http://localhost:8080/api/admin/problem/${today}`);
+        const problemRes = await axios.get(`${baseURL}/admin/problem/${today}`);
         const problemList = problemRes.data.data;
         console.log(problemList)
   
@@ -60,7 +69,10 @@ export default function CoteHouse() {
           checked: false,
         }));
   
-        const solvedRes = await axios.get(`http://localhost:8080/users/${username}/solved`);
+        const storageUsername = localStorage.getItem("username");
+        setUsername(storageUsername);
+
+        const solvedRes = await axios.get(`${baseURL}/users/${storageUsername}/solved`);
         const solvedIds: string[] = solvedRes.data;
   
         const updated = problems.map((problem: Problem) =>
@@ -81,7 +93,7 @@ export default function CoteHouse() {
 
   const handleProblemCheckClick = async (problemId: number) => {
     try {
-      const response = await axios.get('http://localhost:8080/solvedCheck/check', {
+      const response = await axios.get(`${baseURL}/solvedCheck/check`, {
         params: {
           user: username,
           problem: problemId,
@@ -89,12 +101,13 @@ export default function CoteHouse() {
       });
 
       const result = response.data;
+      const point = problemsState.find((p) => p.id === problemId)?.points ?? 0;
       if (result === true) {
         // 문제 점수 찾아서 delta 설정
-        const delta = problemsState.find((p) => p.id === problemId)?.points ?? 0;
+        const delta = point;
 
         // 1. solved 기록 등록
-        await axios.post(`http://localhost:8080/users/${username}/solved/${problemId}`);
+        await axios.post(`${baseURL}/users/${username}/solved/${problemId}`);
 
         // 2. 포인트 증가 요청
         const userScoreRequestData = {
@@ -102,9 +115,19 @@ export default function CoteHouse() {
           delta: delta,
         };
 
-        await axios.patch('http://localhost:8080/api/admin/points', userScoreRequestData);
+        await axios.patch(`${baseURL}/admin/points`, userScoreRequestData);
 
-        // 3. 상태 업데이트
+        // 3. history 업데이트
+        const historyRequestData = {
+          username: username,
+          type: '문제해결',
+          amount: point,
+          reason: `문제 ${problemId}번 풀어서 적립`,
+        }
+
+        const res = await axios.post(`${baseURL}/history/add`, historyRequestData);
+
+        // 4. 상태 업데이트
         const updated = problemsState.map((problem) =>
           problem.id === problemId ? { ...problem, checked: true } : problem
         );

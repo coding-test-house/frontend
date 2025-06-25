@@ -1,134 +1,182 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowLeft, TrendingUp, TrendingDown, Coins, Calendar, Filter, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import axios from "axios"
+import { useMemo } from 'react';
+
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function SettlementPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState("전체")
-  const [selectedType, setSelectedType] = useState("전체")
+  const [selectedPeriod, setSelectedPeriod] = useState('전체');
+  const [selectedType, setSelectedType] = useState('전체');
 
-  const totalStats = {
-    totalEarned: 45680,
-    totalSpent: 32140,
-    netProfit: 13540,
-    winRate: 68.5,
-  }
+  const [username, setUsername] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]); // 또는 타입을 따로 정의해도 됨
+  useEffect(() => {
+    const fetchGameResults = async () => {
+      try {
+        const storageUsername = localStorage.getItem('username');
+        const res = await axios.get(
+          `${baseURL}/game-history/${storageUsername}`
+        );
 
-  const transactions = [
-    {
-      id: 1,
-      date: "2024-01-15",
-      time: "14:30",
-      type: "게임승리",
-      description: "스피드 코딩 - 1등",
-      amount: +8500,
-      balance: 23940,
-      category: "earn",
-    },
-    {
-      id: 2,
-      date: "2024-01-15",
-      time: "14:00",
-      type: "베팅",
-      description: "스피드 코딩 참가비",
-      amount: -2000,
-      balance: 15440,
-      category: "bet",
-    },
-    {
-      id: 3,
-      date: "2024-01-15",
-      time: "10:15",
-      type: "문제해결",
-      description: "백준 #1001 정답",
-      amount: +150,
-      balance: 17440,
-      category: "earn",
-    },
-    {
-      id: 4,
-      date: "2024-01-14",
-      time: "20:45",
-      type: "게임패배",
-      description: "DP 마스터 - 탈락",
-      amount: -5000,
-      balance: 17290,
-      category: "loss",
-    },
-    {
-      id: 5,
-      date: "2024-01-14",
-      time: "20:00",
-      type: "베팅",
-      description: "DP 마스터 참가비",
-      amount: -5000,
-      balance: 22290,
-      category: "bet",
-    },
-    {
-      id: 6,
-      date: "2024-01-14",
-      time: "16:30",
-      type: "게임승리",
-      description: "알고리즘 배틀 - 2등",
-      amount: +3200,
-      balance: 27290,
-      category: "earn",
-    },
-    {
-      id: 7,
-      date: "2024-01-14",
-      time: "16:00",
-      type: "베팅",
-      description: "알고리즘 배틀 참가비",
-      amount: -1500,
-      balance: 24090,
-      category: "bet",
-    },
-    {
-      id: 8,
-      date: "2024-01-13",
-      time: "18:20",
-      type: "보너스",
-      description: "연속 승리 보너스",
-      amount: +1000,
-      balance: 25590,
-      category: "earn",
-    },
-  ]
+        const results: any[] = res.data;
+        const mapped = results.map((item, index) => ({
+          id: index + 1,
+          date: `${item.date.slice(0, 4)}-${item.date.slice(
+            4,
+            6
+          )}-${item.date.slice(6, 8)}`,
+          time: item.time,
+          type: item.type,
+          reason: item.reason,
+          amount: item.amount,
+          balance: item.balance,
+          category: getCategory(item.amount),
+        }));
+
+        setTransactions(mapped); // 또는 기존 내역에 추가하려면: setTransactions(prev => [...prev, ...mapped])
+      } catch (err) {
+        console.error('게임 기록 로딩 실패', err);
+      }
+    };
+
+    fetchGameResults();
+  }, []);
+
+  useEffect(() => {
+    const fetchHistoryData = async () => {
+      try {
+        const storageUsername = localStorage.getItem('username') || null;
+        setUsername(storageUsername);
+        const historyRes = await axios.get(
+          `${baseURL}/history/${storageUsername}`
+        );
+
+        const histories: string[] = historyRes.data;
+        console.log(histories);
+
+        const mapped: any[] = [];
+        let runningBalance = 0;
+
+        // 1. 오래된 기록부터 balance 누적 계산
+        histories
+          .slice() // 원본 배열 복사 (직접 수정 방지)
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.createdAt || a.date).getTime() -
+              new Date(b.createdAt || b.date).getTime()
+          )
+          .forEach((item: any, index: number) => {
+            const amount =
+              typeof item.amount === 'number'
+                ? item.amount
+                : Number(item.amount) || 0;
+            runningBalance += amount;
+
+            const dateObj = new Date(item.time);
+            const dateStr = dateObj.toISOString();
+            mapped.push({
+              id: index + 1,
+              date: dateStr.slice(0, 10),
+              time: dateStr.slice(11, 16),
+              type: item.type || '베팅',
+              reason: item.reason || '상세 정보 없음',
+
+              amount,
+              balance: runningBalance,
+              category: item.category || getCategory(amount),
+            });
+            console.log('item 확인', item);
+          });
+
+        // 2. 최신순 정렬 후 상위 20개만 잘라서 set
+        const latest20 = mapped
+          .slice() // 복사
+          .reverse() // 최신순
+          .slice(0, 20); // 상위 20개
+
+        setTransactions(latest20);
+      } catch (err) {
+        console.error('문제 또는 해결 정보 불러오기 실패:', err);
+      }
+    };
+
+    fetchHistoryData();
+  }, []);
+
+  const getCategory = (amount: number) => {
+    if (amount > 0) return 'earn';
+    if (amount < 0) return 'loss';
+    return 'neutral';
+  };
+
+  const totalStats = useMemo(() => {
+    let totalEarned = 0;
+    let totalSpent = 0;
+  
+    transactions.forEach((t) => {
+      if (typeof t.amount === 'number') {
+        if (t.amount > 0) {
+          totalEarned += t.amount;
+        } else {
+          totalSpent += Math.abs(t.amount);
+        }
+      }
+    });
+  
+    const netProfit = totalEarned - totalSpent;
+  
+    return {
+      totalEarned,
+      totalSpent,
+      netProfit,
+      winRate: 68.5, // 임시 고정
+    };
+  }, [transactions]);
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "게임승리":
       case "문제해결":
-      case "보너스":
+      case "베팅성공":
+      case "베팅 성공":
         return "text-green-400 bg-green-400/10 border-green-400/30"
       case "게임패배":
         return "text-red-400 bg-red-400/10 border-red-400/30"
       case "베팅":
         return "text-yellow-400 bg-yellow-400/10 border-yellow-400/30"
       default:
-        return "text-gray-400 bg-gray-400/10 border-gray-400/30"
+        return 'text-gray-400 bg-gray-400/10 border-gray-400/30';
     }
-  }
+  };
 
   const getAmountDisplay = (amount: number) => {
-    const isPositive = amount > 0
+    const isPositive = amount > 0;
     return (
-      <div className={`flex items-center space-x-2 font-bold ${isPositive ? "text-green-400" : "text-red-400"}`}>
-        {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+      <div
+        className={`flex items-center space-x-2 font-bold ${
+          isPositive ? 'text-green-400' : 'text-red-400'
+        }`}
+      >
+        {isPositive ? (
+          <TrendingUp className="w-4 h-4" />
+        ) : (
+          <TrendingDown className="w-4 h-4" />
+        )}
         <span>
-          {isPositive ? "+" : ""}
+          {isPositive ? '+' : ''}
           {amount.toLocaleString()}P
         </span>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
@@ -138,7 +186,11 @@ export default function SettlementPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="text-purple-300 hover:text-purple-200">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-purple-300 hover:text-purple-200"
+                >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   메인으로
                 </Button>
@@ -147,10 +199,10 @@ export default function SettlementPage() {
                 💰 정산 내역
               </h1>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            {/* <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
               <Download className="w-4 h-4 mr-2" />
               내역 다운로드
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
@@ -161,7 +213,9 @@ export default function SettlementPage() {
           <Card className="bg-gradient-to-br from-green-800/30 to-emerald-800/30 border-2 border-green-400/50 shadow-lg shadow-green-400/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-2">💎</div>
-              <div className="text-green-400 font-bold text-xl">+{totalStats.totalEarned.toLocaleString()}P</div>
+              <div className="text-green-400 font-bold text-xl">
+                +{totalStats.totalEarned.toLocaleString()}P
+              </div>
               <div className="text-green-300 text-sm">총 수익</div>
             </CardContent>
           </Card>
@@ -169,7 +223,9 @@ export default function SettlementPage() {
           <Card className="bg-gradient-to-br from-red-800/30 to-pink-800/30 border-2 border-red-400/50 shadow-lg shadow-red-400/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-2">💸</div>
-              <div className="text-red-400 font-bold text-xl">-{totalStats.totalSpent.toLocaleString()}P</div>
+              <div className="text-red-400 font-bold text-xl">
+                -{totalStats.totalSpent.toLocaleString()}P
+              </div>
               <div className="text-red-300 text-sm">총 지출</div>
             </CardContent>
           </Card>
@@ -177,7 +233,9 @@ export default function SettlementPage() {
           <Card className="bg-gradient-to-br from-yellow-800/30 to-orange-800/30 border-2 border-yellow-400/50 shadow-lg shadow-yellow-400/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-2">🏆</div>
-              <div className="text-yellow-400 font-bold text-xl">+{totalStats.netProfit.toLocaleString()}P</div>
+              <div className="text-yellow-400 font-bold text-xl">
+                +{totalStats.netProfit.toLocaleString()}P
+              </div>
               <div className="text-yellow-300 text-sm">순 수익</div>
             </CardContent>
           </Card>
@@ -185,7 +243,9 @@ export default function SettlementPage() {
           <Card className="bg-gradient-to-br from-blue-800/30 to-cyan-800/30 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20">
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-2">📊</div>
-              <div className="text-blue-400 font-bold text-xl">{totalStats.winRate}%</div>
+              <div className="text-blue-400 font-bold text-xl">
+                {totalStats.winRate}%
+              </div>
               <div className="text-blue-300 text-sm">승률</div>
             </CardContent>
           </Card>
@@ -203,7 +263,10 @@ export default function SettlementPage() {
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <Select
+                  value={selectedPeriod}
+                  onValueChange={setSelectedPeriod}
+                >
                   <SelectTrigger className="w-32 bg-gray-800/50 border-gray-600/50">
                     <SelectValue />
                   </SelectTrigger>
@@ -243,11 +306,21 @@ export default function SettlementPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-600/50">
-                    <th className="text-left py-3 px-2 text-gray-300 font-medium">날짜/시간</th>
-                    <th className="text-left py-3 px-2 text-gray-300 font-medium">유형</th>
-                    <th className="text-left py-3 px-2 text-gray-300 font-medium">내용</th>
-                    <th className="text-right py-3 px-2 text-gray-300 font-medium">포인트 변동</th>
-                    <th className="text-right py-3 px-2 text-gray-300 font-medium">잔액</th>
+                    <th className="text-left py-3 px-2 text-gray-300 font-medium">
+                      날짜/시간
+                    </th>
+                    <th className="text-left py-3 px-2 text-gray-300 font-medium">
+                      유형
+                    </th>
+                    <th className="text-left py-3 px-2 text-gray-300 font-medium">
+                      내용
+                    </th>
+                    <th className="text-left py-3 px-2 text-gray-300 font-medium">
+                      포인트 변동
+                    </th>
+                    <th className="text-right py-3 px-2 text-gray-300 font-medium">
+                      잔액
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,18 +331,30 @@ export default function SettlementPage() {
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <td className="py-4 px-2">
-                        <div className="text-white font-medium">{transaction.date}</div>
-                        <div className="text-gray-400 text-sm">{transaction.time}</div>
+                        <div className="text-white font-medium">
+                          {transaction.date}
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          {transaction.time}
+                        </div>
                       </td>
                       <td className="py-4 px-2">
-                        <Badge className={`${getTypeColor(transaction.type)} border`}>{transaction.type}</Badge>
+                        <Badge
+                          className={`${getTypeColor(transaction.type)} border`}
+                        >
+                          {transaction.type}
+                        </Badge>
                       </td>
                       <td className="py-4 px-2">
-                        <div className="text-white">{transaction.description}</div>
+                        <div className="text-white">{transaction.reason}</div>
                       </td>
-                      <td className="py-4 px-2 text-right">{getAmountDisplay(transaction.amount)}</td>
                       <td className="py-4 px-2 text-right">
-                        <div className="text-yellow-400 font-bold">{transaction.balance.toLocaleString()}P</div>
+                        {getAmountDisplay(transaction.amount)}
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <div className="text-yellow-400 font-bold">
+                          {transaction.balance.toLocaleString()}P
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -287,5 +372,5 @@ export default function SettlementPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
