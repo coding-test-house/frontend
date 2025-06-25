@@ -44,7 +44,11 @@ export default function SettlementPage() {
               date: item.time.slice(0, 10),
               time: item.time.slice(11, 16) || '00:30',
               type: item.type || "기타",
+<<<<<<< HEAD
               reason: item.reason || "상세 정보 없음",
+=======
+              description: item.description || "상세 정보 없음",
+>>>>>>> ec9703e0fde18a8e71cd9d6815ccc18d26ed1f37
               amount,
               balance: runningBalance,
               category: item.category || getCategory(amount),
@@ -160,6 +164,7 @@ export default function SettlementPage() {
       }
   
       // 2. 유형 필터 조건
+<<<<<<< HEAD
       if (selectedType === "전체") return true;
       if (selectedType === "수익") return t.amount > 0;
       if (selectedType === "지출") return t.amount < 0;
@@ -167,6 +172,18 @@ export default function SettlementPage() {
       if (selectedType === "문제해결") return t.type === "문제해결";
   
       return true;
+=======
+      let typeMatch = true;
+      if (selectedType === "수익") {
+        typeMatch = t.amount > 0;
+      } else if (selectedType === "지출") {
+        typeMatch = t.amount < 0;
+      } else if (selectedType === "베팅") {
+        typeMatch = t.type.includes("베팅");
+      }
+  
+      return dateMatch && typeMatch;
+>>>>>>> ec9703e0fde18a8e71cd9d6815ccc18d26ed1f37
     });
   }, [transactions, selectedPeriod, selectedType]);
   
@@ -307,7 +324,7 @@ export default function SettlementPage() {
                         <Badge className={`${getTypeColor(transaction.type)} border`}>{transaction.type}</Badge>
                       </td>
                       <td className="py-4 px-2">
-                        <div className="text-white">{transaction.reason}</div>
+                        <div className="text-white">{transaction.description}</div>
                       </td>
                       <td className="py-4 px-2 text-right">{getAmountDisplay(transaction.amount)}</td>
                       <td className="py-4 px-2 text-right">
