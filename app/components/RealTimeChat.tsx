@@ -25,7 +25,7 @@ export default function RealTimeChat() {
 
     setUsername(storedUsername);
 
-    const socket = new WebSocket('ws://localhost:8080/chat');
+    const socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/chat`);
     socketRef.current = socket;
 
     socket.onopen = () => {
