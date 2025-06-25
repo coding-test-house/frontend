@@ -78,13 +78,13 @@ export default function OddEvenGameModal({
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isOpen) {
       const storedUsername = localStorage.getItem('username');
       if (storedUsername) {
         setUsername(storedUsername);
       }
     }
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (username && isOpen && !initialized) {
@@ -98,6 +98,11 @@ export default function OddEvenGameModal({
       setInitialized(false);
     }
   }, [isOpen]);
+  useEffect(() => {
+    if (username) {
+      setInitialized(false);
+    }
+  }, [username]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
@@ -191,13 +196,6 @@ export default function OddEvenGameModal({
   }, [username, initialized]);
 
   useEffect(() => {
-    if (gamePhase === 'result') {
-      fetchGameData();
-      fetchUserPoints();
-    }
-  }, [gamePhase, fetchGameData]);
-
-  useEffect(() => {
     if (!isOpen) return;
     const updateTimeLeft = () => {
       const now = new Date();
@@ -221,7 +219,7 @@ export default function OddEvenGameModal({
       } else if (minutes === 50 && seconds >= 30) {
         setTimeLeft(nextRoundStartSeconds);
         setGamePhase('result'); // 결과 보여주고 다음 라운드까지 대기
-        fetchGameData();
+        // fetchGameData();
       }
     };
 
@@ -251,6 +249,13 @@ export default function OddEvenGameModal({
 
     return () => clearInterval(polling);
   }, [isOpen, gamePhase, fetchGameData]);
+
+  useEffect(() => {
+    if (gamePhase === 'result') {
+      fetchGameData();
+      fetchUserPoints();
+    }
+  }, [gamePhase, fetchGameData]);
 
   const handleBet = async () => {
     if (
