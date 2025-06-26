@@ -78,13 +78,13 @@ export default function OddEvenGameModal({
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isOpen) {
       const storedUsername = localStorage.getItem('username');
       if (storedUsername) {
         setUsername(storedUsername);
       }
     }
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (username && isOpen && !initialized) {
@@ -93,6 +93,16 @@ export default function OddEvenGameModal({
       setInitialized(true);
     }
   }, [username, isOpen, initialized]);
+  useEffect(() => {
+    if (isOpen) {
+      setInitialized(false);
+    }
+  }, [isOpen]);
+  useEffect(() => {
+    if (username) {
+      setInitialized(false);
+    }
+  }, [username]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
@@ -177,18 +187,13 @@ export default function OddEvenGameModal({
         if (data.userGameResults) {
           setUserGameResults(data.userGameResults);
         }
+        // fetchUserPoints();
       }
     } catch (error) {
       console.error(error);
       alert('게임 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   }, [username, initialized]);
-  useEffect(() => {
-    if (gamePhase === 'result') {
-      fetchGameData();
-      fetchUserPoints();
-    }
-  }, [gamePhase, fetchGameData]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -210,26 +215,46 @@ export default function OddEvenGameModal({
         setGamePhase('betting');
       } else if (minutes === 50 && seconds < 30) {
         setTimeLeft(30 - seconds);
-        setGamePhase('rolling'); // 결과 계산 중
-      } else if (minutes === 50 && seconds >= 30) {
+        setGamePhase('rolling');
+      } else {
         setTimeLeft(nextRoundStartSeconds);
-        setGamePhase('result'); // 결과 보여주고 다음 라운드까지 대기
-        fetchGameData();
+        setGamePhase('result');
       }
     };
 
+    //   updateTimeLeft();
+    //   const timer = setInterval(updateTimeLeft, 1000);
+
+    //   const polling = setInterval(() => {
+    //     fetchGameData();
+    //   }, 1000);
+
+    //   return () => {
+    //     clearInterval(timer);
+    //     clearInterval(polling);
+    //   };
+    // }, [isOpen, fetchGameData, gamePhase]);
     updateTimeLeft();
     const timer = setInterval(updateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || gamePhase === 'rolling') return;
 
     const polling = setInterval(() => {
       fetchGameData();
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
-      clearInterval(polling);
-    };
-  }, [isOpen, fetchGameData, gamePhase]);
+    return () => clearInterval(polling);
+  }, [isOpen, gamePhase, fetchGameData]);
+
+  useEffect(() => {
+    if (gamePhase === 'result') {
+      fetchGameData();
+      fetchUserPoints();
+    }
+  }, [gamePhase, fetchGameData]);
 
   const handleBet = async () => {
     if (
