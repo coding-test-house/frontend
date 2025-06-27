@@ -34,10 +34,10 @@ export default function SessionSelectModal({
   disabled,
 }: Props) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="session-number" className="text-gray-300">
+    <div className="space-y-1">
+      {/* <Label htmlFor="session-number" className="text-gray-300">
         회차 번호 <span className="text-red-400">*</span>
-      </Label>
+      </Label> */}
       <Dialog>
         <DialogTrigger asChild>
           <Button
@@ -56,7 +56,8 @@ export default function SessionSelectModal({
               <Button
                 key={session}
                 variant="outline"
-                className="bg-gray-700 hover:bg-yellow-600 text-white"
+                // className="bg-gray-700 hover:bg-yellow-600 text-white"
+                className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                 onClick={() => onChange(session)}
               >
                 {session}

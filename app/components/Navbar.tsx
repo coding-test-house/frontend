@@ -16,12 +16,25 @@ export default function Navbar() {
       if (!user?.username) return;
 
       try {
+        const token = localStorage.getItem('accessToken');
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${user.username}/point`
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${user.username}/point`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         console.log(res.data);
         setPoint(res.data.point);
       } catch (err) {
+        if (axios.isAxiosError(err)) {
+          console.error(
+            'Axios error:',
+            err.response?.status,
+            err.response?.data
+          );
+        }
         console.error('포인트 조회 실패', err);
       }
     };
