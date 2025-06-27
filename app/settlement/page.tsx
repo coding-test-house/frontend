@@ -35,11 +35,18 @@ export default function SettlementPage() {
   useEffect(() => {
     const fetchHistoryData = async () => {
       try {
-        const storageUsername = localStorage.getItem('username') || null;
-        setUsername(storageUsername);
-        const historyRes = await axios.get(
-          `${baseURL}/history/${storageUsername}`
-        );
+        const username = localStorage.getItem('username');
+        const token = localStorage.getItem('accessToken');
+        if (!username || !token) {
+          console.warn('사용자 정보 또는 토큰이 없습니다.');
+          return;
+        }
+
+        const historyRes = await axios.get(`${baseURL}/history/${username}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const histories: string[] = historyRes.data;
         console.log(histories);
@@ -408,9 +415,7 @@ export default function SettlementPage() {
                         </Badge>
                       </td>
                       <td className="py-4 px-2">
-                        <div className="text-white">
-                          {transaction.description}
-                        </div>
+                        <div className="text-white">{transaction.reason}</div>
                       </td>
                       <td className="py-4 px-2 text-right">
                         {getAmountDisplay(transaction.amount)}
