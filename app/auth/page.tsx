@@ -396,7 +396,7 @@ export default function AuthPage() {
                     <Label htmlFor="boj-id" className="text-gray-300">
                       백준 아이디 <span className="text-red-400">*</span>
                     </Label>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                       <Input
                         id="boj-id"
                         type="text"
@@ -411,6 +411,16 @@ export default function AuthPage() {
                         className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
                         disabled={bojVerification.isVerified}
                         required
+                      />
+                      <SessionSelectModal
+                        sessionNumber={registerData.sessionNumber}
+                        onChange={(selected) =>
+                          setRegisterData({
+                            ...registerData,
+                            sessionNumber: selected,
+                          })
+                        }
+                        disabled={bojVerification.isVerified}
                       />
                       <Button
                         type="button"
@@ -457,7 +467,7 @@ export default function AuthPage() {
                       </Alert>
                     )}
                   </div>
-
+                  <div className="space-y-2"></div>
                   <div className="space-y-2">
                     <Label
                       htmlFor="register-password"
@@ -500,16 +510,7 @@ export default function AuthPage() {
                       required
                     />
                   </div>
-                  <SessionSelectModal
-                    sessionNumber={registerData.sessionNumber}
-                    onChange={(selected) =>
-                      setRegisterData({
-                        ...registerData,
-                        sessionNumber: selected,
-                      })
-                    }
-                    disabled={bojVerification.isVerified}
-                  />
+
                   <Button
                     type="submit"
                     disabled={
