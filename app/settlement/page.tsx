@@ -115,8 +115,6 @@ export default function SettlementPage() {
     let totalSpent = 0;
     let bettingSuccessCount = 0;
     let bettingFailCount = 0;
-    let bettingSuccessCount = 0;
-    let bettingFailCount = 0;
     transactions.forEach((t) => {
       if (typeof t.amount === 'number') {
         if (t.amount > 0) {
@@ -148,7 +146,6 @@ export default function SettlementPage() {
       totalEarned,
       totalSpent,
       netProfit,
-      winRate: parseFloat(winRate.toFixed(1)), // 소수점 1자리
       winRate: parseFloat(winRate.toFixed(1)), // 소수점 1자리
     };
   }, [transactions]);
