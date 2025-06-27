@@ -1,54 +1,104 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { ArrowLeft, AlertTriangle, Send, Shield, Eye, MessageSquare } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
+import { useState } from 'react';
+import {
+  ArrowLeft,
+  AlertTriangle,
+  Send,
+  Shield,
+  Eye,
+  MessageSquare,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
+import axios from 'axios';
 
 export default function ReportPage() {
-  const [reportType, setReportType] = useState("")
-  const [targetUser, setTargetUser] = useState("")
-  const [description, setDescription] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [reportType, setReportType] = useState('cheating');
+  const [email, setEmail] = useState('');
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const reportTypes = [
-    { value: "cheating", label: "부정행위 / 치팅", icon: "🚫" },
-    { value: "harassment", label: "괴롭힘 / 욕설", icon: "😡" },
-    { value: "spam", label: "스팸 / 도배", icon: "📢" },
-    { value: "inappropriate", label: "부적절한 행동", icon: "⚠️" },
-    { value: "bug", label: "버그 / 오류 신고", icon: "🐛" },
-    { value: "other", label: "기타", icon: "❓" },
-  ]
+    { value: 'cheating', label: '부정행위 / 치팅', icon: '🚫' },
+    { value: 'spam', label: '스팸 / 도배', icon: '📢' },
+    { value: 'bug', label: '버그 / 오류 신고', icon: '🐛' },
+    { value: 'other', label: '기타', icon: '❓' },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!reportType || !description.trim()) return
+    e.preventDefault();
 
-    setIsSubmitting(true)
+    if (!reportType || !email.trim() || !description.trim()) return;
 
-    // 신고 제출 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    if (description.length > 200) {
+      alert('상세 내용은 200자 이하로 입력해주세요.');
+      return;
+    }
 
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    setIsSubmitting(true);
 
-    // 폼 초기화
-    setTimeout(() => {
-      setReportType("")
-      setTargetUser("")
-      setDescription("")
-      setIsSubmitted(false)
-    }, 3000)
-  }
+    const reportTypeEnum = {
+      cheating: 'CHEATING',
+      spam: 'SPAM',
+      bug: 'BUG',
+      other: 'ETC',
+    }[reportType];
 
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/report`,
+        {
+          reportType: reportTypeEnum,
+          email,
+          content: description,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      if (!res.data.success) {
+        throw new Error(res.data.message || '신고 제출에 실패했습니다.');
+      }
+
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setReportType('cheating');
+        setEmail('');
+        setDescription('');
+        setIsSubmitted(false);
+      }, 3000);
+    } catch (err) {
+      console.error('신고 제출 오류:', err);
+      alert(
+        `신고 제출 실패: ${
+          axios.isAxiosError(err)
+            ? err.response?.data?.message || '서버 응답 오류'
+            : '알 수 없는 오류'
+        }`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
       {/* Header */}
@@ -57,7 +107,11 @@ export default function ReportPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="text-purple-300 hover:text-purple-200">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-purple-300 hover:text-purple-200"
+                >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   메인으로
                 </Button>
@@ -79,8 +133,8 @@ export default function ReportPage() {
         <Alert className="mb-6 bg-red-900/20 border-2 border-red-500/50 shadow-lg shadow-red-500/20">
           <AlertTriangle className="h-4 w-4 text-red-400" />
           <AlertDescription className="text-red-200">
-            <strong>중요:</strong> 허위 신고는 계정 제재의 사유가 될 수 있습니다. 신중하게 작성해주시고, 구체적인 증거와
-            함께 신고해주세요.
+            <strong>중요:</strong> 허위 신고는 계정 제재의 사유가 될 수
+            있습니다. 신중하게 작성해주시고, 구체적인 증거와 함께 신고해주세요.
           </AlertDescription>
         </Alert>
 
@@ -98,7 +152,9 @@ export default function ReportPage() {
                 {isSubmitted ? (
                   <div className="text-center py-8">
                     <div className="text-6xl mb-4">✅</div>
-                    <h3 className="text-2xl font-bold text-green-400 mb-2">신고가 접수되었습니다</h3>
+                    <h3 className="text-2xl font-bold text-green-400 mb-2">
+                      신고가 접수되었습니다
+                    </h3>
                     <p className="text-gray-300">
                       신고 내용을 검토한 후 적절한 조치를 취하겠습니다.
                       <br />
@@ -129,14 +185,18 @@ export default function ReportPage() {
                       </Select>
                     </div>
 
-                    {/* Target User */}
+                    {/* Email */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">신고 대상 (선택사항)</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        응답 받을 이메일 <span className="text-red-400">*</span>
+                      </label>
                       <Input
-                        value={targetUser}
-                        onChange={(e) => setTargetUser(e.target.value)}
-                        placeholder="사용자 아이디를 입력하세요"
-                        className="bg-gray-800/50 border-gray-600/50 text-white"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="example@example.com"
+                        className="bg-gray-800/50 border-red-500/50 text-white"
+                        required
+                        type="email"
                       />
                     </div>
 
@@ -152,13 +212,17 @@ export default function ReportPage() {
                         className="bg-gray-800/50 border-red-500/50 text-white min-h-32"
                         required
                       />
-                      <div className="text-right text-sm text-gray-400 mt-1">{description.length}/1000</div>
+                      <div className="text-right text-sm text-gray-400 mt-1">
+                        {description.length}/200
+                      </div>
                     </div>
 
                     {/* Submit Button */}
                     <Button
                       type="submit"
-                      disabled={!reportType || !description.trim() || isSubmitting}
+                      disabled={
+                        !reportType || !description.trim() || isSubmitting
+                      }
                       className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
@@ -193,22 +257,32 @@ export default function ReportPage() {
                   <div className="flex items-start space-x-3">
                     <div className="text-lg">🎯</div>
                     <div>
-                      <h4 className="font-medium text-yellow-200">구체적으로 작성</h4>
-                      <p className="text-sm text-gray-300">언제, 어디서, 무엇이 일어났는지 자세히</p>
+                      <h4 className="font-medium text-yellow-200">
+                        구체적으로 작성
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        언제, 어디서, 무엇이 일어났는지 자세히
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="text-lg">📸</div>
                     <div>
                       <h4 className="font-medium text-yellow-200">증거 자료</h4>
-                      <p className="text-sm text-gray-300">스크린샷이나 채팅 로그 등 첨부</p>
+                      <p className="text-sm text-gray-300">
+                        스크린샷이나 채팅 로그 등 첨부
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <div className="text-lg">⚡</div>
                     <div>
-                      <h4 className="font-medium text-yellow-200">신속한 신고</h4>
-                      <p className="text-sm text-gray-300">문제 발생 즉시 신고할수록 효과적</p>
+                      <h4 className="font-medium text-yellow-200">
+                        신속한 신고
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        문제 발생 즉시 신고할수록 효과적
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -262,5 +336,5 @@ export default function ReportPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
