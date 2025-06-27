@@ -18,37 +18,50 @@ export default function RealTimeChat() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null); // ✅ 추가
-
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     if (!storedUsername) return;
 
     setUsername(storedUsername);
 
-    const socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/chat`);
-    socketRef.current = socket;
+    let socket: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
 
-    socket.onopen = () => {
-      console.log('🔌 WebSocket 연결됨');
-    };
+    const connect = () => {
+      socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/chat`);
+      socketRef.current = socket;
 
-    socket.onmessage = (event) => {
-      const text = event.data;
-      const [user, msg] = text.split(': ');
-      const newMessage: ChatMessage = {
-        user,
-        message: msg,
-        time: new Date().toLocaleTimeString(),
+      socket.onopen = () => {
+        console.log('🔌 WebSocket 연결됨');
       };
-      setChatMessages((prev) => [...prev, newMessage]);
+
+      socket.onmessage = (event) => {
+        const text = event.data;
+        const [user, msg] = text.split(': ');
+        const newMessage: ChatMessage = {
+          user,
+          message: msg,
+          time: new Date().toLocaleTimeString(),
+        };
+        setChatMessages((prev) => [...prev, newMessage]);
+      };
+
+      socket.onclose = () => {
+        console.log('❌ WebSocket 연결 종료. 2초 후 재연결 시도...');
+        reconnectTimer = setTimeout(connect, 2000); // 2초 후 재연결 시도
+      };
+
+      socket.onerror = (error) => {
+        console.error('⚠️ WebSocket 오류 발생', error);
+        socket.close(); // 에러 시 소켓 닫고 onclose로 넘어감
+      };
     };
 
-    socket.onclose = () => {
-      console.log('❌ WebSocket 연결 종료');
-    };
+    connect(); // 초기 연결
 
     return () => {
-      socket.close();
+      clearTimeout(reconnectTimer); // 재연결 타이머 정리
+      socket?.close(); // 소켓 종료
     };
   }, []);
 
