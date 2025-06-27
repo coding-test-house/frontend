@@ -1,5 +1,5 @@
 'use client';
-
+import axios from 'axios';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Coins, Users, Dice1, Dice2, Crown, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -120,12 +120,17 @@ export default function OddEvenGameModal({
   const fetchUserPoints = useCallback(async () => {
     if (!username) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${username}/point`
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${username}/point`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      if (!res.ok) throw new Error('포인트 로딩 실패');
-      const data = await res.json();
-      setUserPoints(data.point);
+
+      setUserPoints(res.data.point); // axios는 .data로 바로 접근
     } catch (error) {
       console.error(error);
       alert('유저 포인트를 불러오는 중 오류가 발생했습니다.');
@@ -135,11 +140,17 @@ export default function OddEvenGameModal({
   const fetchGameData = useCallback(async () => {
     if (!username) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/roundSummary/${username}`
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/roundSummary/${username}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      if (!res.ok) throw new Error('게임 데이터 로드 실패');
-      const data: BetSummaryResponseDto = await res.json();
+
+      const data: BetSummaryResponseDto = res.data;
 
       const newOddTotal = data.odd.totalBet;
       const newEvenTotal = data.even.totalBet;
@@ -270,16 +281,20 @@ export default function OddEvenGameModal({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/bet/${username}`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ betAmount, betType: selectedSide }),
+          betAmount,
+          betType: selectedSide,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         }
       );
-
-      if (!res.ok) throw new Error('베팅 실패');
 
       await fetchUserPoints();
       alert(
