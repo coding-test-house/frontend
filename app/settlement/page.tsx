@@ -42,17 +42,16 @@ export default function SettlementPage() {
           return;
         }
 
-        const historyRes = await axios.get(`${baseURL}/history/${username}`, {
+        const historyRes = await axios.get(`${baseURL}/user/history`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const histories: string[] = historyRes.data;
+        const histories: string[] = historyRes.data.data;
         console.log(histories);
 
         const mapped: any[] = [];
-        let runningBalance = 0;
 
         // 1. 오래된 기록부터 balance 누적 계산
         histories
@@ -67,7 +66,6 @@ export default function SettlementPage() {
               typeof item.amount === 'number'
                 ? item.amount
                 : Number(item.amount) || 0;
-            runningBalance += amount;
 
             const dateObj = new Date(item.time);
             const date = dateObj
@@ -91,7 +89,6 @@ export default function SettlementPage() {
               type: item.type || '베팅',
               reason: item.reason || '상세 정보 없음',
               amount,
-              balance: runningBalance,
               category: item.category || getCategory(amount),
             });
           });
@@ -157,17 +154,34 @@ export default function SettlementPage() {
     };
   }, [transactions]);
 
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'GAME_WIN':
+        return '게임승리';
+      case 'GAME_LOSS':
+        return '게임패배';
+      case 'BETTING':
+        return '베팅';
+      case 'PROBLEM_SOLVED':
+        return '문제해결';
+      case 'ADMIN_ADJUSTMENT':
+        return '관리자조정';
+      default:
+        return '기타';
+    }
+  };
+
   const getTypeColor = (type: string) => {
     switch (type) {
-      case '게임승리':
-      case '문제해결':
-      case '베팅성공':
-      case '베팅 성공':
+      case 'GAME_WIN':
+      case 'PROBLEM_SOLVED':
         return 'text-green-400 bg-green-400/10 border-green-400/30';
-      case '게임패배':
+      case 'GAME_LOSS':
         return 'text-red-400 bg-red-400/10 border-red-400/30';
-      case '베팅':
+      case 'BETTING':
         return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30';
+      case 'ADMIN_ADJUSTMENT':
+        return 'text-purple-400 bg-purple-400/10 border-purple-400/30';
       default:
         return 'text-gray-400 bg-gray-400/10 border-gray-400/30';
     }
@@ -177,7 +191,7 @@ export default function SettlementPage() {
     const isPositive = amount > 0;
     return (
       <div
-        className={`flex items-center space-x-2 font-bold ${
+        className={`flex justify-end items-center space-x-2 font-bold ${
           isPositive ? 'text-green-400' : 'text-red-400'
         }`}
       >
@@ -238,9 +252,8 @@ export default function SettlementPage() {
       if (selectedType === '전체') return true;
       if (selectedType === '수익') return t.amount > 0;
       if (selectedType === '지출') return t.amount < 0;
-      if (selectedType === '베팅')
-        return ['베팅', '베팅 성공', '베팅성공'].includes(t.type);
-      if (selectedType === '문제해결') return t.type === '문제해결';
+      if (selectedType === '베팅') return t.type === 'BETTING';
+      if (selectedType === '문제해결') return t.type === 'PROBLEM_SOLVED';
 
       return true;
     });
@@ -387,9 +400,6 @@ export default function SettlementPage() {
                     <th className="text-right py-3 px-2 text-gray-300 font-medium">
                       포인트 변동
                     </th>
-                    <th className="text-right py-3 px-2 text-gray-300 font-medium">
-                      잔액
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -411,7 +421,7 @@ export default function SettlementPage() {
                         <Badge
                           className={`${getTypeColor(transaction.type)} border`}
                         >
-                          {transaction.type}
+                          {getTypeLabel(transaction.type)}
                         </Badge>
                       </td>
                       <td className="py-4 px-2">
@@ -419,11 +429,6 @@ export default function SettlementPage() {
                       </td>
                       <td className="py-4 px-2 text-right">
                         {getAmountDisplay(transaction.amount)}
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <div className="text-yellow-400 font-bold">
-                          {transaction.balance.toLocaleString()}P
-                        </div>
                       </td>
                     </tr>
                   ))}

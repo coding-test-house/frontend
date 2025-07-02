@@ -68,7 +68,13 @@ export default function AdminPage() {
   const fetchProblems = async () => {
     try {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
       );
       if (res.data.success) {
         setProblems(res.data.data); // 응답의 data가 배열
@@ -81,7 +87,13 @@ export default function AdminPage() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
       );
       if (res.data.success) {
         setUsers(res.data.data);
@@ -110,6 +122,12 @@ export default function AdminPage() {
         {
           username: selectedUser.username,
           delta: pointAdjustment,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
         }
       );
 
@@ -136,6 +154,12 @@ export default function AdminPage() {
           title: noticeTitle,
           content: noticeContent,
           gameInfo: noticeInfo,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
         }
       );
 
@@ -173,6 +197,12 @@ export default function AdminPage() {
           url: problemLink,
           difficulty: problemDifficulty,
           day: problemDay,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
         }
       );
 
@@ -201,7 +231,13 @@ export default function AdminPage() {
 
     try {
       const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem/${problemNumber}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/problem/${problemNumber}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
       );
 
       if (res.data.success) {

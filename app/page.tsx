@@ -32,7 +32,7 @@ export default function CoteHouse() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userPoints, setUserPoints] = useState(15420);
   const [selectedTab, setSelectedTab] = useState('전체');
-  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);  
+  const [isOddEvenModalOpen, setIsOddEvenModalOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
 
   interface Problem {
@@ -47,9 +47,9 @@ export default function CoteHouse() {
   // const userId = '6658f86789d4af26695f8910'
 
   const { user, logout, isAuthenticated } = useAuth();
-  
+
   useEffect(() => {
-    const saved = localStorage.getItem("username") || null;
+    const saved = localStorage.getItem('username') || null;
     setUsername(saved);
   }, []);
 
@@ -57,10 +57,18 @@ export default function CoteHouse() {
     const fetchData = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const problemRes = await axios.get(`${baseURL}/admin/problem/${today}`);
+        const problemRes = await axios.get(
+          `${baseURL}/admin/problem/${today}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            },
+          }
+        );
         const problemList = problemRes.data.data;
-        console.log(problemList)
-  
+        console.log(problemList);
+
         const problems = problemList.map((p: any) => ({
           id: Number(p.problemNumber),
           title: p.title,
@@ -68,28 +76,34 @@ export default function CoteHouse() {
           points: p.point,
           checked: false,
         }));
-  
-        const storageUsername = localStorage.getItem("username");
-        setUsername(storageUsername);
 
-        const solvedRes = await axios.get(`${baseURL}/users/${storageUsername}/solved`);
+        const storageUsername = localStorage.getItem('username');
+        setUsername(storageUsername);
+        const token = localStorage.getItem('accessToken');
+        const solvedRes = await axios.get(
+          `${baseURL}/users/${storageUsername}/solved`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         const solvedIds: string[] = solvedRes.data;
-  
+
         const updated = problems.map((problem: Problem) =>
           solvedIds.includes(problem.id.toString())
             ? { ...problem, checked: true }
             : problem
-        );        
-  
+        );
+
         setProblemsState(updated);
       } catch (err) {
         console.error('문제 또는 해결 정보 불러오기 실패:', err);
       }
     };
-  
-    fetchData(); 
+
+    fetchData();
   }, []);
-  
 
   const handleProblemCheckClick = async (problemId: number) => {
     try {
@@ -123,9 +137,12 @@ export default function CoteHouse() {
           type: '문제해결',
           amount: point,
           reason: `문제 ${problemId}번 풀어서 적립`,
-        }
+        };
 
-        const res = await axios.post(`${baseURL}/history/add`, historyRequestData);
+        const res = await axios.post(
+          `${baseURL}/history/add`,
+          historyRequestData
+        );
 
         // 4. 상태 업데이트
         const updated = problemsState.map((problem) =>
@@ -141,12 +158,11 @@ export default function CoteHouse() {
       console.error('요청 실패:', error);
       alert('오류가 발생했습니다.');
     }
-  }
+  };
 
   // useEffect(() => {
   //   console.log('🔁 상태 변경됨:', problemsState);
   // }, [problemsState]);
-  
 
   const games = [
     {
@@ -228,18 +244,18 @@ export default function CoteHouse() {
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          className={`transition-all ${
-                            problem.checked
-                              ? 'bg-gray-500 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                          }`}
-                          onClick={() => handleProblemCheckClick(problem.id)}
-                          disabled={problem.checked}
-                        >
-                          {problem.checked ? '제출완료' : '제출 ㄱ?'}
-                        </Button>
+                          <Button
+                            size="sm"
+                            className={`transition-all ${
+                              problem.checked
+                                ? 'bg-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                            }`}
+                            onClick={() => handleProblemCheckClick(problem.id)}
+                            disabled={problem.checked}
+                          >
+                            {problem.checked ? '제출완료' : '제출 ㄱ?'}
+                          </Button>
                         </div>
                       </div>
                     ))}
