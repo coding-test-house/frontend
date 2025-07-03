@@ -315,7 +315,7 @@ export default function SettlementPage() {
             <CardContent className="p-4 text-center">
               <div className="text-2xl mb-2">🏆</div>
               <div className="text-yellow-400 font-bold text-xl">
-                +{totalStats.netProfit.toLocaleString()}P
+                {totalStats.netProfit.toLocaleString()}P
               </div>
               <div className="text-yellow-300 text-sm">순 수익</div>
             </CardContent>

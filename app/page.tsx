@@ -40,6 +40,7 @@ export default function CoteHouse() {
     title: string;
     difficulty: string;
     points: number;
+    url: string;
     checked: boolean;
   }
 
@@ -57,15 +58,12 @@ export default function CoteHouse() {
     const fetchData = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const problemRes = await axios.get(
-          `${baseURL}/admin/problem/${today}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-          }
-        );
+        const problemRes = await axios.get(`${baseURL}/problem/${today}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        });
         const problemList = problemRes.data.data;
         console.log(problemList);
 
@@ -73,30 +71,14 @@ export default function CoteHouse() {
           id: Number(p.problemNumber),
           title: p.title,
           difficulty: p.difficulty,
-          points: p.point,
-          checked: false,
+          points: p.points,
+          url: p.url,
+          checked: p.solved,
         }));
 
         const storageUsername = localStorage.getItem('username');
         setUsername(storageUsername);
-        const token = localStorage.getItem('accessToken');
-        const solvedRes = await axios.get(
-          `${baseURL}/users/${storageUsername}/solved`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const solvedIds: string[] = solvedRes.data;
-
-        const updated = problems.map((problem: Problem) =>
-          solvedIds.includes(problem.id.toString())
-            ? { ...problem, checked: true }
-            : problem
-        );
-
-        setProblemsState(updated);
+        setProblemsState(problems);
       } catch (err) {
         console.error('문제 또는 해결 정보 불러오기 실패:', err);
       }
@@ -107,56 +89,30 @@ export default function CoteHouse() {
 
   const handleProblemCheckClick = async (problemId: number) => {
     try {
-      const response = await axios.get(`${baseURL}/solvedCheck/check`, {
-        params: {
-          user: username,
-          problem: problemId,
-        },
-      });
-
-      const result = response.data;
       const point = problemsState.find((p) => p.id === problemId)?.points ?? 0;
-      if (result === true) {
-        // 문제 점수 찾아서 delta 설정
-        const delta = point;
 
-        // 1. solved 기록 등록
-        await axios.post(`${baseURL}/users/${username}/solved/${problemId}`);
+      await axios.post(
+        `${baseURL}/problem/check`,
+        {
+          problemNumber: problemId.toString(),
+          point: point,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
 
-        // 2. 포인트 증가 요청
-        const userScoreRequestData = {
-          username: username,
-          delta: delta,
-        };
+      const updated = problemsState.map((problem) =>
+        problem.id === problemId ? { ...problem, checked: true } : problem
+      );
+      setProblemsState(updated);
 
-        await axios.patch(`${baseURL}/admin/points`, userScoreRequestData);
-
-        // 3. history 업데이트
-        const historyRequestData = {
-          username: username,
-          type: '문제해결',
-          amount: point,
-          reason: `문제 ${problemId}번 풀어서 적립`,
-        };
-
-        const res = await axios.post(
-          `${baseURL}/history/add`,
-          historyRequestData
-        );
-
-        // 4. 상태 업데이트
-        const updated = problemsState.map((problem) =>
-          problem.id === problemId ? { ...problem, checked: true } : problem
-        );
-        setProblemsState(updated);
-
-        alert('풀이 성공! 포인트가 반영되었습니다.');
-      } else {
-        alert('문제를 풀고 체크해주세요!');
-      }
-    } catch (error) {
-      console.error('요청 실패:', error);
-      alert('오류가 발생했습니다.');
+      alert('풀이 성공! 포인트가 반영되었습니다.');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message ?? '알 수 없는 오류 발생';
+      alert(`오류: ${msg}`);
     }
   };
 
@@ -227,12 +183,20 @@ export default function CoteHouse() {
                         className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-600/50 hover:border-green-400/50 transition-all"
                       >
                         <div className="flex items-center space-x-4">
-                          <span className="text-gray-400 font-mono">
-                            #{problem.id}
-                          </span>
-                          <span className="text-white font-medium">
-                            {problem.title}
-                          </span>
+                          {/* ✅ 링크로 감싸기 */}
+                          <a
+                            href={problem.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center space-x-4 hover:underline"
+                          >
+                            <span className="text-gray-400 font-mono">
+                              #{problem.id}
+                            </span>
+                            <span className="text-white font-medium">
+                              {problem.title}
+                            </span>
+                          </a>
                           <Badge
                             variant="outline"
                             className="text-yellow-400 border-yellow-400/50"
@@ -243,6 +207,7 @@ export default function CoteHouse() {
                             {problem.points}P
                           </span>
                         </div>
+
                         <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
