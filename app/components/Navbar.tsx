@@ -18,7 +18,7 @@ export default function Navbar() {
       try {
         const token = localStorage.getItem('accessToken');
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${user.username}/point`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -26,7 +26,7 @@ export default function Navbar() {
           }
         );
         console.log(res.data);
-        setPoint(res.data.point);
+        setPoint(res.data.data.point);
       } catch (err) {
         if (axios.isAxiosError(err)) {
           console.error(

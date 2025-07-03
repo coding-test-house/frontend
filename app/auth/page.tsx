@@ -197,8 +197,8 @@ export default function AuthPage() {
       setIsEntering(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       window.location.reload();
-    } catch (err) {
-      alert('회원가입에 실패했습니다.');
+    } catch (err: any) {
+      alert(err.message || '회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
