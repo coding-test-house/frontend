@@ -608,7 +608,7 @@ export default function AdminPage() {
                         <Input
                           value={problemDay}
                           onChange={(e) => setProblemDay(e.target.value)}
-                          placeholder="예: 28"
+                          placeholder="예: 2025-07-02"
                           className="bg-gray-900/50 border-purple-500/50 text-white"
                         />
                       </div>

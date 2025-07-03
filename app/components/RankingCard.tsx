@@ -47,12 +47,12 @@ export default function RankingCard() {
     try {
       let url = '';
       if (tab === '전체') {
-        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/toprank/all`;
+        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/ranking`;
       } else {
         // 이번 회차의 경우 클래스명을 어떻게 결정할지에 따라 수정 필요
         // 예시로 특정 클래스명을 사용하거나, 현재 사용자의 클래스를 사용할 수 있습니다
         const className = '11회차'; // 실제 구현에서는 적절한 클래스명으로 변경
-        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/toprank/class/${selectedClassName}`;
+        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/ranking/${selectedClassName}`;
       }
 
       // const response = await axios.get<RankingData[]>(url);
@@ -137,10 +137,10 @@ export default function RankingCard() {
                       rankData.rank === 1
                         ? 'bg-yellow-500 text-black'
                         : rankData.rank === 2
-                        ? 'bg-gray-400 text-black'
-                        : rankData.rank === 3
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-gray-600 text-white'
+                          ? 'bg-gray-400 text-black'
+                          : rankData.rank === 3
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-600 text-white'
                     }`}
                   >
                     {rankData.rank}
