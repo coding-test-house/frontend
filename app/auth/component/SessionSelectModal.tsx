@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react';
 
 interface Props {
   sessionNumber: string;
@@ -33,12 +33,16 @@ export default function SessionSelectModal({
   onChange,
   disabled,
 }: Props) {
+  const [open, setOpen] = useState(false);
+
+  const handleSelect = (session: string) => {
+    onChange(session);
+    setOpen(false);
+  };
+
   return (
     <div className="space-y-1">
-      {/* <Label htmlFor="session-number" className="text-gray-300">
-        회차 번호 <span className="text-red-400">*</span>
-      </Label> */}
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button
             className="w-full bg-gray-800/50 border-purple-500/50 text-white justify-start"
@@ -56,9 +60,8 @@ export default function SessionSelectModal({
               <Button
                 key={session}
                 variant="outline"
-                // className="bg-gray-700 hover:bg-yellow-600 text-white"
                 className="bg-gray-800/50 border-purple-500/50 text-white placeholder:text-gray-400"
-                onClick={() => onChange(session)}
+                onClick={() => handleSelect(session)}
               >
                 {session}
               </Button>

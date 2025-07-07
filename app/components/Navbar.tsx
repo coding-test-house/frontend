@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/app/auth/AuthContext';
 import { Button } from '@/components/ui/button';
-import { User, Coins, Crown } from 'lucide-react';
+import { User, Coins } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -18,15 +18,14 @@ export default function Navbar() {
       try {
         const token = localStorage.getItem('accessToken');
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${user.username}/point`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        console.log(res.data);
-        setPoint(res.data.point);
+        setPoint(res.data.data.point);
       } catch (err) {
         if (axios.isAxiosError(err)) {
           console.error(
@@ -51,31 +50,26 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center space-x-6">
-          <Link href="/settlement">
-            <Button
-              variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
-            >
-              정산내역
-            </Button>
-          </Link>
-          <Link href="/report">
-            <Button
-              variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-            >
-              신고하기
-            </Button>
-          </Link>
-          <Link href="/admin">
-            <Button
-              variant="ghost"
-              className="text-red-500 hover:text-red-400 hover:bg-red-500/10 border border-red-500/30"
-            >
-              <Crown className="w-4 h-4 mr-2" />
-              관리자
-            </Button>
-          </Link>
+          {isAuthenticated && (
+            <>
+              <Link href="/settlement">
+                <Button
+                  variant="ghost"
+                  className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                >
+                  정산내역
+                </Button>
+              </Link>
+              <Link href="/report">
+                <Button
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                >
+                  신고하기
+                </Button>
+              </Link>
+            </>
+          )}
 
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (

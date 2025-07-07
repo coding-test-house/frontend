@@ -87,7 +87,7 @@ export default function AdminPage() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/user`,
         {
           headers: {
             'Content-Type': 'application/json',
