@@ -122,7 +122,7 @@ export default function OddEvenGameModal({
     try {
       const token = localStorage.getItem('accessToken');
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/${username}/point`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/me`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -130,7 +130,7 @@ export default function OddEvenGameModal({
         }
       );
 
-      setUserPoints(res.data.point); // axios는 .data로 바로 접근
+      setUserPoints(res.data.data.point); // axios는 .data로 바로 접근
     } catch (error) {
       console.error(error);
       alert('유저 포인트를 불러오는 중 오류가 발생했습니다.');
@@ -142,7 +142,7 @@ export default function OddEvenGameModal({
     try {
       const token = localStorage.getItem('accessToken');
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/roundSummary/${username}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/roundSummary`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -283,7 +283,7 @@ export default function OddEvenGameModal({
     try {
       const token = localStorage.getItem('accessToken');
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/bet/${username}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/oddeven/bet`,
         {
           betAmount,
           betType: selectedSide,
@@ -333,14 +333,14 @@ export default function OddEvenGameModal({
     gamePhase === 'betting'
       ? '베팅 마감까지'
       : gamePhase === 'rolling'
-      ? '결과 공개까지'
-      : '게임 시작까지';
+        ? '결과 공개까지'
+        : '게임 시작까지';
   const displayTimeValue =
     gamePhase === 'betting'
       ? formatTime(timeLeft)
       : gamePhase === 'rolling'
-      ? formatTime(timeLeft)
-      : formatTime(timeLeft);
+        ? formatTime(timeLeft)
+        : formatTime(timeLeft);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -423,8 +423,8 @@ export default function OddEvenGameModal({
                             : 'border-blue-400 shadow-lg shadow-blue-400/30 scale-105'
                         }`
                       : isOdd
-                      ? 'border-red-600/50 hover:border-red-400/70'
-                      : 'border-blue-600/50 hover:border-blue-400/70'
+                        ? 'border-red-600/50 hover:border-red-400/70'
+                        : 'border-blue-600/50 hover:border-blue-400/70'
                   }`}
                   onClick={() =>
                     gamePhase === 'betting' && setSelectedSide(side)
@@ -494,8 +494,8 @@ export default function OddEvenGameModal({
                                 idx === 0
                                   ? 'bg-yellow-500 text-black'
                                   : isOdd
-                                  ? 'bg-red-600 text-white'
-                                  : 'bg-blue-600 text-white'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-blue-600 text-white'
                               }`}
                             >
                               {idx + 1}
@@ -644,8 +644,8 @@ export default function OddEvenGameModal({
                   {!myBet
                     ? '이번 라운드에 베팅하지 않았습니다.'
                     : myBet.betType === resultType
-                    ? '🎉 축하합니다! 승리하셨습니다!'
-                    : '😢 아쉽게도 패배하셨습니다.'}
+                      ? '🎉 축하합니다! 승리하셨습니다!'
+                      : '😢 아쉽게도 패배하셨습니다.'}
                 </div>
               </CardContent>
             </Card>
