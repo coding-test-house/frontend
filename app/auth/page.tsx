@@ -292,7 +292,7 @@ export default function AuthPage() {
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center space-x-2 text-cyan-300">
               <Crown className="w-6 h-6" />
-              <span>VIP 입장</span>
+              <span>코테하우스 입장</span>
               <Crown className="w-6 h-6" />
             </CardTitle>
           </CardHeader>
@@ -305,36 +305,24 @@ export default function AuthPage() {
               <TabsList className="grid w-full grid-cols-2 bg-gray-800/50 border border-purple-500/50">
                 <TabsTrigger
                   value="login"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                  className="text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
                 >
                   로그인
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white"
+                  className="text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white"
                 >
                   회원가입
                 </TabsTrigger>
               </TabsList>
-              {activeTab === 'register' && (
-                <div className="flex justify-center mt-4">
-                  <Button
-                    variant="default"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md px-5 py-2 rounded-md"
-                    onClick={() => setGuideOpen(true)}
-                  >
-                    <HelpCircle className="w-4 h-4 mr-2" />
-                    회원가입 방법 보기
-                  </Button>
-                </div>
-              )}
 
               {/* Login Tab */}
               <TabsContent value="login" className="space-y-4 mt-6">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-username" className="text-gray-300">
-                      아이디
+                      백준 아이디
                     </Label>
                     <Input
                       id="login-username"
@@ -411,7 +399,15 @@ export default function AuthPage() {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="boj-id" className="text-gray-300">
-                      백준 아이디 <span className="text-red-400">*</span>
+                      백준 아이디 <span className="text-red-400">*</span>{' '}
+                      {activeTab === 'register' && (
+                        <p
+                          className="text-sm text-gray-400 hover:text-gray-200  cursor-pointer mt-1 ml-auto w-fit"
+                          onClick={() => setGuideOpen(true)}
+                        >
+                          💡검증 방법
+                        </p>
+                      )}
                     </Label>
                     <div className="flex space-x-3">
                       <Input
@@ -548,7 +544,7 @@ export default function AuthPage() {
                     ) : (
                       <div className="flex items-center space-x-2">
                         <Crown className="w-4 h-4" />
-                        <span>VIP 회원가입</span>
+                        <span>코테하우스 회원가입</span>
                       </div>
                     )}
                   </Button>
