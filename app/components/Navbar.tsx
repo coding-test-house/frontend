@@ -12,6 +12,20 @@ export default function Navbar() {
   const [point, setPoint] = useState<number | null>(null);
 
   useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Date.now() / 1000;
+        if (payload.exp < now) {
+          localStorage.removeItem('accessToken');
+          logout();
+        }
+      } catch (e) {
+        localStorage.removeItem('accessToken');
+        logout();
+      }
+    }
     const fetchPoint = async () => {
       if (!user?.username) return;
 
