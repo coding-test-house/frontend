@@ -12,6 +12,9 @@ import {
   Sparkles,
   Crown,
 } from 'lucide-react';
+import SignupGuideModal from '@/app/auth/SignupGuideModal';
+
+import { HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,6 +30,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+
   const { login } = useAuth();
   // Login state
   const [loginData, setLoginData] = useState({
@@ -311,6 +316,18 @@ export default function AuthPage() {
                   회원가입
                 </TabsTrigger>
               </TabsList>
+              {activeTab === 'register' && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="default"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md px-5 py-2 rounded-md"
+                    onClick={() => setGuideOpen(true)}
+                  >
+                    <HelpCircle className="w-4 h-4 mr-2" />
+                    회원가입 방법 보기
+                  </Button>
+                </div>
+              )}
 
               {/* Login Tab */}
               <TabsContent value="login" className="space-y-4 mt-6">
@@ -545,6 +562,7 @@ export default function AuthPage() {
         <div className="text-center mt-6 text-gray-400 text-sm">
           <p>🎲 행운을 빕니다! 책임감 있는 베팅을 하세요 🎲</p>
         </div>
+        <SignupGuideModal open={guideOpen} onOpenChange={setGuideOpen} />
       </div>
     </div>
   );
