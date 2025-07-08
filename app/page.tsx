@@ -219,7 +219,7 @@ export default function CoteHouse() {
                             onClick={() => handleProblemCheckClick(problem.id)}
                             disabled={problem.checked}
                           >
-                            {problem.checked ? '제출완료' : '제출 ㄱ?'}
+                            {problem.checked ? '제출완료' : '제출하기?'}
                           </Button>
                         </div>
                       </div>

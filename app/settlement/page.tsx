@@ -348,7 +348,7 @@ export default function SettlementPage() {
                   value={selectedPeriod}
                   onValueChange={setSelectedPeriod}
                 >
-                  <SelectTrigger className="w-32 bg-gray-800/50 border-gray-600/50">
+                  <SelectTrigger className="w-32 text-white/80 border-gray-600/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -362,7 +362,7 @@ export default function SettlementPage() {
               <div className="flex items-center space-x-2">
                 <Coins className="w-4 h-4 text-gray-400" />
                 <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-32 bg-gray-800/50 border-gray-600/50">
+                  <SelectTrigger className="w-32 text-white/80 border-gray-600/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
