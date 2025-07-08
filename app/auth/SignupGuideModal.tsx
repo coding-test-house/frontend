@@ -23,7 +23,7 @@ export default function SignupGuideModal({
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-blue-400">
             <HelpCircle className="w-6 h-6 text-blue-400" />
-            회원가입 방법 안내
+            백준 아이디 검증 방법 안내
           </DialogTitle>
         </DialogHeader>
 
@@ -35,7 +35,9 @@ export default function SignupGuideModal({
             </span>
             에<br />
             <span className="text-green-300 font-semibold">회차 번호</span>를
-            정확히 입력해야 인증이 완료됩니다!
+            정확히 입력한 후,{' '}
+            <span className="text-green-300 font-semibold">검증버튼</span>을
+            클릭하면 인증이 완료됩니다!
           </p>
 
           <div className="w-full flex justify-center">
